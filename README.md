@@ -3,6 +3,9 @@ Finding Restaurants, Insights And Notably Delectable Spots
 
 
 ## Architecture projet temp
+
+
+```r
 FRIANDS/
 ├── app/
 │   ├── __init__.py
@@ -53,3 +56,5 @@ FRIANDS/
     ├── rapport.tex            # Rapport LaTeX
     ├── figures/               # Graphiques pour le rapport
     └── references.bib         # Bibliographie
+
+```
