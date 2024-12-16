@@ -23,7 +23,6 @@ schemaDB = {
     },
     "log": {
         "id_log": "INTEGER PRIMARY KEY",
-        "id_utilisateur": "INTEGER",
         "timestamp": "DATETIME",
         "module": "TEXT",
         "priorite": "TEXT",

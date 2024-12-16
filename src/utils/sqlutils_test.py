@@ -3,7 +3,7 @@ from schemaDB import schemaDB
 from pathlib import Path
 
 # Définir le chemin de la base de données
-db_path = Path("friands.db")
+db_path = Path("data/friands.db")
 
 # Créer une instance de sqlUtils
 db = sqlutils(db_path)
