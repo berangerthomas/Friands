@@ -3,24 +3,28 @@ from pathlib import Path
 
 
 class sqlutils:
-    def __init__(self, filepath: Path):
-        # Vérifier que le fichier db existe
-        """
-        Initialize a new sqlite database connection.
+    def __init__(self, filepath: Path) -> tuple:
+        try:
+            # Vérifier que le fichier db existe
+            """
+            Initialize a new sqlite database connection.
 
-        Args:
-            filepath (Path): Path to the sqlite database file.
+            Args:
+                filepath (Path): Path to the sqlite database file.
 
-        Notes:
-            If the file does not exist, it will be created.
-        """
-        if not filepath.exists():
-            # Si le fichier n'existe pas, on le crée
-            filepath.touch()
+            Notes:
+                If the file does not exist, it will be created.
+            """
+            if not filepath.exists():
+                # Si le fichier n'existe pas, on le crée
+                filepath.touch()
 
-        # initialiser la connexion à la base de données
-        self.db = sqlite3.connect(filepath)
-        self.cursor = self.db.cursor()
+            # initialiser la connexion à la base de données
+            self.db = sqlite3.connect(filepath)
+            self.cursor = self.db.cursor()
+            return (True, "Initialization successful")
+        except sqlite3.Error as e:
+            return (False, str(e))
 
     def create_table(self, table_name: str, schema: dict) -> tuple:
         """
@@ -46,26 +50,21 @@ class sqlutils:
             self.cursor.execute(f"CREATE TABLE {table_name} ({schema_str})")
             return (True, f"Table '{table_name}' crée avec succès")
 
-    def select(self, table_name: str, columns: list = None, where: list = None):
+    def select(self, query: str) -> tuple:
         """
-        Execute a SELECT query on the table.
+        Execute a complete SQL query.
 
         Args:
-            table_name (str): The name of the table to query.
-            columns (list): A list of column names to return. If None, returns all columns.
-            where (list): A list of condition strings (e.g. ["age > 20", "name = 'Alice'"]).
+            query (str): The SQL query to execute.
 
         Returns:
-            list: A list of tuples, each containing the values from the selected columns.
-
-        Notes:
-            If `where` is specified, only rows matching all conditions will be returned.
-            If `columns` is not specified, all columns will be returned.
+            tuple: (True, result) if successful, (False, error message) otherwise.
         """
-        query = f"SELECT {', '.join(columns or ['*'])} FROM {table_name}"
-        if where and len(where) > 0:
-            query += " WHERE " + " AND ".join(where)
-        return self.cursor.execute(query).fetchall()
+        try:
+            result = self.cursor.execute(query).fetchall()
+            return (True, result)
+        except sqlite3.Error as e:
+            return (False, str(e))
 
     def insert(
         self,
@@ -177,7 +176,7 @@ class sqlutils:
         except Exception as e:
             return (False, str(e))
 
-    def commit(self):
+    def commit(self) -> tuple:
         """
         Commit the current transaction.
 
@@ -186,18 +185,26 @@ class sqlutils:
             If you do not call this method, the database will automatically
             commit or rollback the transaction when the connection is closed.
         """
-        self.db.commit()
+        try:
+            self.db.commit()
+            return (True, "Commit successful")
+        except sqlite3.Error as e:
+            return (False, str(e))
 
-    def rollback(self):
+    def rollback(self) -> tuple:
         """
         Rollback the current transaction.
 
         Notes:
-            This method is used to explicitly rollback a transaction.
-            If you do not call this method, the database will automatically
-            commit the transaction when the connection is closed.
+        This method is used to explicitly rollback a transaction.
+        If you do not call this method, the database will automatically
+        commit the transaction when the connection is closed.
         """
-        self.db.rollback()
+        try:
+            self.db.rollback()
+            return (True, "Rollback successful")
+        except sqlite3.Error as e:
+            return (False, str(e))
 
     def maintenance(self) -> tuple:
         """
