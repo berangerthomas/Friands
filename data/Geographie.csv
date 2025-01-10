@@ -1,4 +1,4 @@
-id_restaurant,localisation,latitude,longitude,restaurant_density,transport_count
+id_localisation,localisation,latitude,longitude,restaurant_density,transport_count
 1,"93 Rue Masséna, 69006 Lyon France",45.7656776,4.8549475,148,22
 2,"85 rue Massena, 69006 Lyon France",45.7665585,4.8547867,135,17
 3,"86 Quai Perrache, 69002 Lyon France",45.7331898,4.8180424,3,13

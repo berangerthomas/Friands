@@ -2,30 +2,28 @@ schemaDB = {
     "avis": {
         "id_avis": "INTEGER PRIMARY KEY",
         "id_restaurant": "INTEGER REFERENCES restaurant(id_restaurant)",
-        "id_utilisateur": "INTEGER REFERENCES utilisateur(id_utilisateur)",
+        "nom_utilisateur": "TEXT",
         "note_restaurant": "FLOAT",
         "date_avis": "DATETIME",
+        "titre_avis": "TEXT",
         "contenu_avis": "TEXT",
-        "ratio_avis": "FLOAT",
     },
-    "restaurant": {
+    "restaurants": {
         "id_restaurant": "INTEGER PRIMARY KEY",
         "nom": "TEXT",
-        "localisation": "TEXT",
         "categorie": "TEXT",
         "tags": "TEXT",
         "note_globale": "FLOAT",
+        "total_comments": "FLOAT",
+        "url": "TEXT",
+        "id_localisation": "INTEGER REFERENCES geographie(id_localisation)",
     },
-    "utilisateur": {
-        "id_utilisateur": "INTEGER PRIMARY KEY",
-        "nom": "TEXT",
-        "ratio_avis_global": "FLOAT",
-    },
-    "log": {
-        "id_log": "INTEGER PRIMARY KEY",
-        "timestamp": "DATETIME",
-        "module": "TEXT",
-        "priorite": "TEXT",
-        "message": "TEXT",
+    "geographie": {
+        "id_localisation": "INTEGER",
+        "localisation": "TEXT",
+        "latitude": "FLOAT",
+        "longitude": "FLOAT",
+        "restaurant_density": "INTEGER",
+        "transport_count": "INTEGER",
     },
 }

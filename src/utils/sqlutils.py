@@ -1,30 +1,28 @@
 import sqlite3
 from pathlib import Path
+import csv
 
 
 class sqlutils:
-    def __init__(self, filepath: Path) -> tuple:
-        try:
-            # Vérifier que le fichier db existe
-            """
-            Initialize a new sqlite database connection.
+    def __init__(self, filepath: Path):
+        # Vérifier que le fichier db existe
+        """
+        Initialize a new sqlite database connection.
 
-            Args:
-                filepath (Path): Path to the sqlite database file.
+        Args:
+            filepath (Path): Path to the sqlite database file.
 
-            Notes:
-                If the file does not exist, it will be created.
-            """
-            if not filepath.exists():
-                # Si le fichier n'existe pas, on le crée
-                filepath.touch()
+        Notes:
+            If the file does not exist, it will be created.
+        """
+        if not filepath.exists():
+            # Si le fichier n'existe pas, on crée le dossier parent et le fichier
+            filepath.parent.mkdir(parents=True, exist_ok=True)
+            filepath.touch()
 
-            # initialiser la connexion à la base de données
-            self.db = sqlite3.connect(filepath)
-            self.cursor = self.db.cursor()
-            return (True, "Initialization successful")
-        except sqlite3.Error as e:
-            return (False, str(e))
+        # initialiser la connexion à la base de données
+        self.db = sqlite3.connect(filepath)
+        self.cursor = self.db.cursor()
 
     def create_table(self, table_name: str, schema: dict) -> tuple:
         """
@@ -89,6 +87,7 @@ class sqlutils:
             If `column_names` is specified, it must match the length of the first row in `rows`.
             If `chk_duplicates` is True, this method will check if the rows already exist in the table before inserting.
             If at least one row already exists, the method will return a tuple containing False and a message indicating that first duplicate row.
+            It will not insert any rows if a duplicate is found.
         """
 
         if column_names:
@@ -103,7 +102,13 @@ class sqlutils:
             schema_info = self.cursor.execute(
                 f"PRAGMA table_info({table_name})"
             ).fetchall()
-            column_names = [col[1] for col in schema_info if not col[5]]
+            # Toutes les colonnes sauf la clé primaire
+            # column_names = [col[1] for col in schema_info if not col[5]]
+            # idée abandonnée, on garde toutes les colonnes et on
+            # insère aussi la clé primaire
+
+            # Toutes les colonnes
+            column_names = [col[1] for col in schema_info]
 
         if chk_duplicates:
             # Vérifier si des enregistrements existent déjà
@@ -114,6 +119,7 @@ class sqlutils:
                 if self.cursor.execute(
                     f"SELECT 1 FROM {table_name} WHERE {condition_placeholders}", row
                 ).fetchone():
+                    self.db.rollback()
                     return (
                         False,
                         f"doublon trouvé dans la table '{table_name}' : {row}",
@@ -123,9 +129,80 @@ class sqlutils:
             placeholders = ", ".join(["?"] * len(column_names))
             query = f"INSERT INTO {table_name} ({', '.join(column_names)}) VALUES ({placeholders})"
             self.cursor.executemany(query, rows)
-            return (True, "Insert successful")
+            return (True, f"{self.cursor.rowcount} row(s) successfully inserted")
         except sqlite3.Error as error:
             return (False, str(error))
+
+    def load_from_csv(
+        self,
+        table_name: str,
+        filepath: Path,
+        delimiter: str = ",",
+        encoding: str = "utf-8",
+        skip_header: bool = True,
+        chk_duplicates: bool = True,
+    ) -> tuple:
+        """
+        Load data from a CSV file into the table.
+
+        Args:
+            table_name (str): The name of the table to load data into.
+            filepath (Path): The path to the CSV file to load data from.
+            delimiter (str): CSV delimiter character (default: ',').
+            encoding (str): File encoding (default: 'utf-8').
+            skip_header (bool): Skip first row if True (default: True).
+
+        Returns:
+            tuple: (success: bool, message: str)
+        """
+
+        if not isinstance(filepath, Path):
+            return (False, "filepath must be a Path object")
+
+        if not filepath.exists():
+            return (False, f"File {filepath} does not exist")
+
+        if filepath.suffix.lower() != ".csv":
+            return (False, f"File {filepath} is not a CSV file")
+
+        try:
+            schema_info = self.cursor.execute(
+                f"PRAGMA table_info({table_name})"
+            ).fetchall()
+            if not schema_info:
+                return (False, f"Table {table_name} does not exist")
+
+            rows = []
+            with open(filepath, "r", encoding=encoding, newline="") as f:
+                reader = csv.reader(f, delimiter=delimiter)
+                if skip_header:
+                    next(reader, None)
+                for row in reader:
+                    rows.append(row)
+
+            if not rows:
+                return (False, "CSV file is empty")
+
+            result = self.insert(table_name, rows, chk_duplicates=chk_duplicates)
+            if result[0]:
+                self.db.commit()
+                return (
+                    True,
+                    f"Successfully loaded {len(rows)} rows from {filepath.resolve()}",
+                )
+            else:
+                self.db.rollback()
+                return (False, f"Insert failed: {result[1]}")
+
+        except (csv.Error, UnicodeDecodeError) as e:
+            self.db.rollback()
+            return (False, f"CSV parsing error: {str(e)}")
+        except sqlite3.Error as e:
+            self.db.rollback()
+            return (False, f"Database error: {str(e)}")
+        except Exception as e:
+            self.db.rollback()
+            return (False, f"Unexpected error: {str(e)}")
 
     def update(self, table_name: str, data: dict, where: list = None) -> tuple:
         """
@@ -150,7 +227,7 @@ class sqlutils:
             query += f" WHERE {' AND '.join(where)}"
         try:
             self.cursor.execute(query, values)
-            return (True, "Update successful")
+            return (True, f"{self.cursor.rowcount} row(s) successfully updated")
         except Exception as e:
             return (False, str(e))
 
@@ -172,7 +249,7 @@ class sqlutils:
         try:
             query = f"DELETE FROM {table_name} WHERE {' AND '.join(where)}"
             self.cursor.execute(query)
-            return (True, "Delete successful")
+            return (True, f"{self.cursor.rowcount} row(s) successfully deleted")
         except Exception as e:
             return (False, str(e))
 
@@ -214,7 +291,6 @@ class sqlutils:
             This method is used to perform database maintenance operations : vacuuming, analyze, and optimize.
         """
         try:
-            self.db.execute("ANALYZE")
             self.db.execute("PRAGMA optimize")
             return (True, "Maintenance successful")
         except Exception as e:
