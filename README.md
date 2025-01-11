@@ -49,7 +49,11 @@ FRIANDS/
 │   ├── nlp/
 │   │   ├── __init__.py
 │   │   ├── sentiment_analysis.py    # Analyse des sentiments
-│   │   └── summary_generator.py     # Génération de résumés 
+│   │   └── summary_generator.py     # Génération de résumés
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── sqlutils.py              # Classe de manipulation de la base Sqlite
+│   │   └── schemaDB.py              # Dictionnaire de définition des tables
 ├── requirements.txt           # Dépendances Python
 ├── README.md                  # Documentation du projet
 └── report/
