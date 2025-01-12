@@ -13,10 +13,11 @@ schemaDB = {
         "nom": "TEXT",
         "categorie": "TEXT",
         "tags": "TEXT",
+        "price":"TEXT",
         "note_globale": "FLOAT",
         "total_comments": "FLOAT",
         "url": "TEXT",
-        "id_localisation": "INTEGER REFERENCES geographie(id_localisation)",
+        
     },
     "geographie": {
         "id_localisation": "INTEGER",
@@ -25,5 +26,6 @@ schemaDB = {
         "longitude": "FLOAT",
         "restaurant_density": "INTEGER",
         "transport_count": "INTEGER",
+        "id_restaurant": "INTEGER REFERENCES restaurant(id_restaurant)",
     },
 }
