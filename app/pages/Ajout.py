@@ -14,7 +14,7 @@ with st.form(key='add_restaurant_form'):
 # Ajouter le restaurant à la base de données
 if submit_button:
     if url:
-        if url.startswith("https://www.tripadvisor.fr"):
+        if url.startswith("https://www.tripadvisor.fr/Restaurant_Review") and url.endswith(".html"):
             # Afficher une barre de chargement
             progress_bar = st.progress(0)
             
@@ -38,7 +38,7 @@ if submit_button:
             
             st.success(f"Le restaurant a été ajouté avec succès !")
         else:
-            st.error("L'URL doit commencer par 'https://www.tripadvisor.fr'")
+            st.error("L'URL doit commencer par 'https://www.tripadvisor.fr/Restaurant_Review' et se terminer par '.html'.")
     else:
         st.error("Veuillez remplir tous les champs du formulaire.")
             
