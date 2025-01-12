@@ -90,14 +90,14 @@ class sqlutils:
             It will not insert any rows if a duplicate is found.
         """
 
-        if column_names:
-            # Vérifier que les colonnes passées en argument correspondent au schéma de la table
-            if len(rows[0]) != len(column_names):
-                return (
-                    False,
-                    f"Data length ({len(rows[0])}) does not match number of columns ({len(column_names)}) provided",
-                )
-        else:
+        # if column_names:
+        #     # Vérifier que les colonnes passées en argument correspondent au schéma de la table
+        #     if len(rows[0]) != len(column_names):
+        #         return (
+        #             False,
+        #             f"Data length ({len(rows[0])}) does not match number of columns ({len(column_names)}) provided",
+        #         )
+        if not column_names:
             # Si aucune colonne fournie, utiliser toutes les colonnes de la table
             schema_info = self.cursor.execute(
                 f"PRAGMA table_info({table_name})"
@@ -139,70 +139,40 @@ class sqlutils:
         filepath: Path,
         delimiter: str = ",",
         encoding: str = "utf-8",
-        skip_header: bool = True,
-        chk_duplicates: bool = True,
     ) -> tuple:
         """
-        Load data from a CSV file into the table.
+        Load data from a CSV file into the table, only inserting columns present in the CSV header.
 
         Args:
             table_name (str): The name of the table to load data into.
-            filepath (Path): The path to the CSV file to load data from.
-            delimiter (str): CSV delimiter character (default: ',').
+            filepath (Path): The path to the CSV file.
+            delimiter (str): CSV delimiter (default: ',').
             encoding (str): File encoding (default: 'utf-8').
-            skip_header (bool): Skip first row if True (default: True).
 
         Returns:
             tuple: (success: bool, message: str)
         """
+        with open(filepath, "r", encoding=encoding) as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=delimiter)
+            if reader.fieldnames is None:
+                return (False, "CSV file is missing a header row")
+            for row in reader:
+                # Filtrer les colonnes présentes dans le CSV
+                columns = ", ".join(row.keys())
+                placeholders = ", ".join(["?" for _ in row])
+                values = tuple(row.values())
 
-        if not isinstance(filepath, Path):
-            return (False, "filepath must be a Path object")
-
-        if not filepath.exists():
-            return (False, f"File {filepath} does not exist")
-
-        if filepath.suffix.lower() != ".csv":
-            return (False, f"File {filepath} is not a CSV file")
-
-        try:
-            schema_info = self.cursor.execute(
-                f"PRAGMA table_info({table_name})"
-            ).fetchall()
-            if not schema_info:
-                return (False, f"Table {table_name} does not exist")
-
-            rows = []
-            with open(filepath, "r", encoding=encoding, newline="") as f:
-                reader = csv.reader(f, delimiter=delimiter)
-                if skip_header:
-                    next(reader, None)
-                for row in reader:
-                    rows.append(row)
-
-            if not rows:
-                return (False, "CSV file is empty")
-
-            result = self.insert(table_name, rows, chk_duplicates=chk_duplicates)
-            if result[0]:
-                self.db.commit()
-                return (
-                    True,
-                    f"Successfully loaded {len(rows)} rows from {filepath.resolve()}",
-                )
-            else:
-                self.db.rollback()
-                return (False, f"Insert failed: {result[1]}")
-
-        except (csv.Error, UnicodeDecodeError) as e:
-            self.db.rollback()
-            return (False, f"CSV parsing error: {str(e)}")
-        except sqlite3.Error as e:
-            self.db.rollback()
-            return (False, f"Database error: {str(e)}")
-        except Exception as e:
-            self.db.rollback()
-            return (False, f"Unexpected error: {str(e)}")
+                # Construire et exécuter la requête INSERT
+                try:
+                    self.cursor.execute(
+                        f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})",
+                        values,
+                    )
+                except Exception as e:
+                    self.db.rollback()
+                    return (False, f"Error inserting row: {e}")
+        self.commit()
+        return (True, f"Data loaded successfully from '{filepath}'")
 
     def update(self, table_name: str, data: dict, where: list = None) -> tuple:
         """
