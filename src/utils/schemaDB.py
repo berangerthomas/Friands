@@ -16,19 +16,12 @@ schemaDB = {
         "nom": "TEXT",
         "categorie": "TEXT",
         "tags": "TEXT",
-<<<<<<< Updated upstream
-        "note_globale": "FLOAT",
-        "total_comments": "FLOAT",
-        "url": "TEXT",
-        "id_localisation": "INTEGER REFERENCES geographie(id_localisation)",
-=======
         "price": "TEXT",
         "note_globale": "FLOAT",
         "total_comments": "FLOAT",
         "url": "TEXT",
         "nlp_summary": "TEXT",
         "nlp_tags": "TEXT",
->>>>>>> Stashed changes
     },
     "geographie": {
         "id_localisation": "INTEGER PRIMARY KEY",

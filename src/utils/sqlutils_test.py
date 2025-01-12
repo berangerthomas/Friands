@@ -2,10 +2,6 @@ from sqlutils import sqlutils
 from schemaDB import schemaDB
 from pathlib import Path
 
-<<<<<<< Updated upstream
-# Définir le chemin de la base de données
-db_path = Path("data/friands.db")
-=======
 
 # Récupérer le chemin de ce script
 script_path = Path(__file__).resolve().parent
@@ -17,7 +13,6 @@ db_path = script_path / "../../data/friands.db"
 # Vérifier le chemin de la base de données
 print(f"Chemin de la base de données: {db_path.resolve()}")
 
->>>>>>> Stashed changes
 
 # Créer une instance de sqlUtils
 db = sqlutils(db_path)
