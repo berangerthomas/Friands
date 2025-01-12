@@ -153,10 +153,12 @@ class sqlutils:
             tuple: (success: bool, message: str)
         """
         with open(filepath, "r", encoding=encoding) as csvfile:
-            reader = csv.DictReader(csvfile, delimiter=delimiter)
-            if reader.fieldnames is None:
-                return (False, "CSV file is missing a header row")
+            reader = csv.DictReader(
+                csvfile, delimiter=delimiter
+            )  # First line = header by default
+            nb_rows = 0
             for row in reader:
+
                 # Filtrer les colonnes présentes dans le CSV
                 columns = ", ".join(row.keys())
                 placeholders = ", ".join(["?" for _ in row])
@@ -168,11 +170,15 @@ class sqlutils:
                         f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})",
                         values,
                     )
+                    nb_rows += 1
                 except Exception as e:
                     self.db.rollback()
                     return (False, f"Error inserting row: {e}")
         self.commit()
-        return (True, f"Data loaded successfully from '{filepath}'")
+        return (
+            True,
+            f"Successfully loaded {nb_rows} rows from '{filepath}' into '{table_name}'",
+        )
 
     def update(self, table_name: str, data: dict, where: list = None) -> tuple:
         """
