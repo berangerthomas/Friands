@@ -303,23 +303,6 @@ if __name__ == "__main__":
     for idres, avis in avis:
         analyzer.add_review(avis)
 
-    # Ajouter des avis avec métadonnées
-    # analyzer.add_review(
-    #     "Le produit est excellent, très satisfait de mon achat !",
-    #     rating=5,
-    #     metadata={"date": "2024-01-01", "user_id": "user1"},
-    # )
-    # analyzer.add_review(
-    #     "Livraison rapide mais qualité moyenne",
-    #     rating=3,
-    #     metadata={"date": "2024-01-02", "user_id": "user2"},
-    # )
-    # analyzer.add_review(
-    #     "Je ne recommande pas, trop cher pour la qualité",
-    #     rating=2,
-    #     metadata={"date": "2024-01-03", "user_id": "user3"},
-    # )
-
     # Analyser et générer le rapport
     resultats = analyzer.analyze_all(detailed=True)
     rapport = analyzer.generate_report(resultats)
