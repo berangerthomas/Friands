@@ -29,6 +29,5 @@ schemaDB = {
         "longitude": "FLOAT",
         "restaurant_density": "INTEGER",
         "transport_count": "INTEGER",
-        "id_restaurant": "INTEGER REFERENCES restaurant(id_restaurant)",
     },
 }
