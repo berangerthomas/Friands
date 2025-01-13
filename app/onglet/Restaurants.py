@@ -1,18 +1,10 @@
 import streamlit as st
-from function_app import transform_to_df, transform_to_df_join, generate_circle
-import sys 
-import os
+from function_app import transform_to_df_join, generate_circle, retrieve_year
 from pathlib import Path
 import plotly.graph_objects as go
 import pandas as pd
+import plotly.express as px
 from sqlutils import sqlutils
-
-
-# Ajouter le chemin du dossier utils au PATH
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src', 'utils')))
-
-# Redéfinir l'encodage de la sortie standard
-sys.stdout.reconfigure(encoding='utf-8')
 
 # Chargement de la base de données
 db_path = Path("data/friands2.db")
@@ -20,7 +12,9 @@ db = sqlutils(db_path)
 restaurants = transform_to_df_join(db, "SELECT * FROM restaurants, geographie WHERE restaurants.id_restaurant = geographie.id_restaurant;")
 
 # Ajouter un selectbox pour choisir un restaurant
-st.title("🔍 Zoom sur un restaurant 🔍")
+st.markdown("""
+    <h1 style="text-align: center;">🔍 Comparaison des restaurants 🔍</h1>
+""", unsafe_allow_html=True)
 st.markdown("Dans cette page, vous pouvez obtenir plus d'informations sur les restaurants disponibles dans l'application !")
 
 st.subheader("Sélectionnez un restaurant")
@@ -29,18 +23,18 @@ selected_restaurant = st.selectbox("Choisissez un restaurant", restaurants["rest
 # Filtrer les données en fonction du restaurant sélectionné
 selected_data = restaurants[restaurants["restaurants.nom"] == selected_restaurant]
 
-col1, col2 = st.columns([1, 1])
+col1, col2 = st.columns([1, 2])
 
 # Afficher les informations du restaurant sélectionné
 with col1:
     st.write(f"### {selected_restaurant}")
-    st.write(f"**Adresse**: {selected_data['geographie.localisation'].values[0]}")
-    st.write(f"**Type de Cuisine**: {selected_data['restaurants.tags'].values[0]}")
-    st.write(f"**Prix**: {selected_data['restaurants.price'].values[0]}")
-    st.write(f"**Note globale**: {selected_data['restaurants.note_globale'].values[0]}")
-    st.write(f"**Nombre d'avis**: {selected_data['restaurants.total_comments'].values[0]}")
-    st.write(f"**Nombre de transports à proximité**: {selected_data['geographie.transport_count'].values[0]}")
-    st.write(f"**Nombre de restaurants dans un rayon de 500 mètres**: {selected_data['geographie.restaurant_density'].values[0]}")
+    st.write(f"**Adresse** : {selected_data['geographie.localisation'].values[0]}")
+    st.write(f"**Type de Cuisine** : {selected_data['restaurants.tags'].values[0]}")
+    st.write(f"**Prix** : {selected_data['restaurants.price'].values[0]}")
+    st.write(f"**Note globale** : {selected_data['restaurants.note_globale'].values[0]}")
+    st.write(f"**Nombre d'avis** : {selected_data['restaurants.total_comments'].values[0]}")
+    st.write(f"**Nombre de transports à proximité** : {selected_data['geographie.transport_count'].values[0]}")
+    st.write(f"**Nombre de restaurants dans un rayon de 500 mètres** : {selected_data['geographie.restaurant_density'].values[0]}")
     st.markdown(f"**Pour plus d'informations sur {selected_restaurant}** [cliquez ici]({selected_data['restaurants.url'].values[0]})")
 
 with col2: 
@@ -125,30 +119,98 @@ with col2:
 # st.plotly_chart(fig)
 
 
+st.subheader("Analyse temporelle des notes globales")
+# Calculer la note globale moyenne par an
+tab1, tab2 = st.tabs(["Analyse par année", "Focus par mois"])
+
+with tab1:
+    avis = transform_to_df_join(db, f"SELECT avis.date_avis, avis.titre_avis, avis.contenu_avis, avis.note_restaurant FROM restaurants, avis WHERE restaurants.id_restaurant = avis.id_restaurant AND restaurants.nom = '{selected_restaurant}';")
+    
+    # Récupérer les données par année
+    moyenne_par_an = retrieve_year(avis, "avis.date_avis","année" ,"avis.note_restaurant", "mean")
+    # Graphique en courbe
+    fig = px.line(moyenne_par_an, x='année',
+                y='avis.note_restaurant',
+                    title=f'Note globale moyenne par an pour {selected_restaurant}',
+                    markers=True,
+                    labels={"avis.note_restaurant": "Note globale moyenne par année"}
+                    )
+    fig.update_traces(line=dict(color='green'))
+
+    st.plotly_chart(fig)
+with tab2:
+    # Sélectionner une année pour visualiser les données par mois
+    selected_year = st.selectbox("Sélectionnez une année pour voir les données par mois", moyenne_par_an['année'])
+
+    # Filtrer les données pour l'année sélectionnée
+    avis_par_an = avis[avis['année'] == selected_year].copy()
+    avis_par_an.loc[:, 'mois_nom'] = avis_par_an['avis.date_avis'].dt.strftime('%B')
+    moyenne_par_mois = avis_par_an.groupby('mois_nom')['avis.note_restaurant'].mean().reset_index()
+
+    # Définir l'ordre des mois
+    mois_ordre = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    moyenne_par_mois['mois_nom'] = pd.Categorical(moyenne_par_mois['mois_nom'], categories=mois_ordre, ordered=True)
+    moyenne_par_mois = moyenne_par_mois.sort_values('mois_nom')
+
+    # Créer un graphique en courbe pour les données par mois
+    fig_mois = px.line(moyenne_par_mois, x='mois_nom',
+                        y='avis.note_restaurant', 
+                        title=f'Note globale moyenne par mois pour {selected_year}', 
+                        markers=True,
+                        labels={"avis.note_restaurant": f"Note globale moyenne pour l'année {selected_year}",
+                                "mois_nom": "Mois"}
+                    )
+    fig_mois.update_traces(line=dict(color='green'))
+    st.plotly_chart(fig_mois)
+
 # Afficher les avis du restaurant
 st.write("### Avis des clients")
-avis = transform_to_df_join(db, f"SELECT avis.date_avis, avis.titre_avis, avis.contenu_avis FROM restaurants, avis WHERE restaurants.id_restaurant = avis.id_restaurant AND restaurants.nom = '{selected_restaurant}';")
-# classement des avis par date de la plus récente à la plus ancienne
-avis = avis.sort_values(by="avis.date_avis", ascending=False)
-avis.columns = ["Date de l'avis", "Titre de l'avis", "Contenu de l'avis"]
 
-# Convertir les dates en objets datetime
-avis["Date de l'avis"] = pd.to_datetime(avis["Date de l'avis"])
+button_avis = st.button("Découvrir tous les avis")
 
-# Ajout d'un filtre pour sélectionner les dates que l'on veut afficher
-min_date = avis["Date de l'avis"].min().date()
-max_date = avis["Date de l'avis"].max().date()
-start_date, end_date = st.date_input("Sélectionnez la plage de dates", [min_date, max_date], label_visibility="visible")
+if button_avis or "filtered_avis" in st.session_state:
+    if button_avis:
+        avis.drop(columns="année", axis=1, inplace=True)
+        avis = avis.sort_values(by="avis.date_avis", ascending=False)
+        avis.columns = ["Date de l'avis", "Titre de l'avis", "Contenu de l'avis", "Note du restaurant"]
+        st.session_state["avis"] = avis
 
-# Convertir les dates sélectionnées par l'utilisateur en datetime
-start_date = pd.to_datetime(start_date)
-end_date = pd.to_datetime(end_date)
+    avis = st.session_state["avis"]
 
-# Filtrer les avis en fonction de la plage de dates sélectionnée
-filtered_avis = avis[(avis["Date de l'avis"] >= start_date) & (avis["Date de l'avis"] <= end_date)]
+    col3, col4 = st.columns([1, 1])
+    with col3:
+        min_date = avis["Date de l'avis"].min().date()
+        max_date = avis["Date de l'avis"].max().date()
+        debut_date, fin_date = st.date_input("Sélectionnez la plage de dates", [min_date, max_date], label_visibility="visible")
 
-filtered_avis["Date de l'avis"] = filtered_avis["Date de l'avis"].dt.strftime('%Y/%m/%d')
-filtered_avis.reset_index(drop=True, inplace=True)
+    with col4:
+        unique_notes = avis["Note du restaurant"].unique()
+        selected_notes = st.multiselect("Sélectionnez la ou les notes qui vous intéressent", unique_notes)
 
-st.write(filtered_avis)
+    debut_date = pd.to_datetime(debut_date)
+    fin_date = pd.to_datetime(fin_date)
+
+    # Filtrage des avis
+    if selected_notes:
+        # Appliquer le filtre de notes uniquement si des notes sont sélectionnées
+        filtered_avis = avis[
+            (avis["Date de l'avis"] >= debut_date)
+            & (avis["Date de l'avis"] <= fin_date)
+            & (avis["Note du restaurant"].isin(selected_notes))
+        ]
+    else:
+        # Ne pas appliquer de filtre sur les notes si aucune note n'est sélectionnée
+        filtered_avis = avis[
+            (avis["Date de l'avis"] >= debut_date) & (avis["Date de l'avis"] <= fin_date)
+        ]
+
+    # Formater les dates pour l'affichage
+    filtered_avis.loc[:, "Date de l'avis"] = filtered_avis["Date de l'avis"].dt.strftime('%Y/%m/%d')
+    filtered_avis.reset_index(drop=True, inplace=True)
+
+    # Sauvegarder dans la session
+    st.session_state["filtered_avis"] = filtered_avis
+
+    # Afficher les datas filtrées
+    st.dataframe(filtered_avis, use_container_width=True)
 

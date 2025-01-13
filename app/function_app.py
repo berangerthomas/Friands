@@ -126,3 +126,28 @@ def generate_circle(lat, lon, rayon, num_points=100):
         circle_lons.append(new_lon)
     
     return circle_lats, circle_lons
+
+import pandas as pd
+def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
+    """
+    Récupère les données d'une colonne en fonction de l'année.
+
+    Args:  
+        df : DataFrame
+        date_column : nom de la colonne contenant les dates
+        col_to_group : nom de ou des colonnes à grouper
+        col_to_analyze : nom de la colonne à analyser
+        fun : fonction à appliquer (mean ou sum)
+    Returns:
+        grp_years : Df contenant les données agrégées par année
+    """
+    df[f"{date_column}"] = pd.to_datetime(df[f"{date_column}"])
+    df["année"] = df[f"{date_column}"].dt.year
+    
+    if fun == 'mean':
+        grp_years = df.groupby(col_to_group)[f'{col_to_analyze}'].mean().reset_index()
+    elif fun == 'nunique':
+        grp_years = df.groupby(col_to_group)[f'{col_to_analyze}'].nunique().reset_index()
+    else:
+        raise ValueError("The argument 'fun' must be either 'mean' or 'nunique'")
+    return grp_years
