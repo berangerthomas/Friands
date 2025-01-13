@@ -1,0 +1,25 @@
+- scraping
+    - choix des outils : API + beautifulsoup
+    - liste des champs
+- bdd
+    - choix de sqlite
+    - class d'interfaçage
+    - schema
+- interface
+    - cartographie
+    - ajout de resto
+    - graphiques avec plotly
+- llm / nlp
+    - mistral résumé
+    - sentiment analysis : modele hugging face
+- docker
+- données open data
+    - restos alentour rayon 500m
+    - transport autour
+    - coord gps à partir d'openstreetmap
+- comparaison intra-restaurant
+    - variabilité des avis (= des notes) ?
+    - variation au cours du temps (des notes, du sentiment, etc) ?
+- comparaison inter-restaurants
+    - comparer sentiment ?
+    
