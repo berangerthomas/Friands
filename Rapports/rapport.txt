@@ -22,4 +22,8 @@
     - variation au cours du temps (des notes, du sentiment, etc) ?
 - comparaison inter-restaurants
     - comparer sentiment ?
-    
+
+A faire :
+- finir readme
+- faire 2 vidéos
+- docker
