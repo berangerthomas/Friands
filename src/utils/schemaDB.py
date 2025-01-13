@@ -7,8 +7,7 @@ schemaDB = {
         "date_avis": "DATETIME",
         "titre_avis": "TEXT",
         "contenu_avis": "TEXT",
-        "nlp_note": "FLOAT",
-        "nlp_score": "FLOAT",
+        "label": "INTEGER",
     },
     "restaurants": {
         "id_restaurant": "INTEGER PRIMARY KEY",
@@ -20,8 +19,7 @@ schemaDB = {
         "note_globale": "FLOAT",
         "total_comments": "FLOAT",
         "url": "TEXT",
-        "nlp_summary": "TEXT",
-        "nlp_tags": "TEXT",
+        "summary": "TEXT",
     },
     "geographie": {
         "id_localisation": "INTEGER PRIMARY KEY",
