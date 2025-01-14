@@ -1,19 +1,17 @@
 import re
 import pandas as pd
 from datetime import datetime
-
-from sqlutils import sqlutils
-from schemaDB import schemaDB
 from pathlib import Path
 import requests
 import time
 import random
 from bs4 import BeautifulSoup
-import re
 
-from datetime import datetime
-import locale 
-locale.setlocale(locale.LC_TIME, 'French_France.1252')  # Pour Windows, si nécessaire
+from sqlutils import sqlutils
+from schemaDB import schemaDB
+import locale
+
+locale.setlocale(locale.LC_TIME, 'French_France.1252')  
 
 
 
@@ -25,18 +23,36 @@ headers = {
     "accept-language": "en-US,en;q=0.9,fr;q=0.8",
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
 }
+
  # Suppression des espaces et ponctuations bizarres dans les champs texte
 def clean_text(text):
     if isinstance(text, str):
-        # Réduit plusieurs espaces à un seul
         text = re.sub(r'\s+', ' ', text)
-        # Supprime les guillemets et caractères similaires
         text = re.sub(r'[\"\'”“‘’]', '', text)
-        # Supprime les emojis
-        text = re.sub(r'[^\w\s,.-]', '', text)  # Conserve les lettres, chiffres, espaces, ponctuation minimale
-        # Supprime les espaces en début et fin
+        text = re.sub(r'[^\w\s,.-]', '', text)  
         text = text.strip()
     return text
+
+def extract_address(soup):
+    # Try using span
+    address_div = None
+    spans = soup.find_all("span", class_="biGQs _P XWJSj Wb")
+    for s in spans:
+        address_div = s.find("div", class_="biGQs _P pZUbB hmDzD")
+        if address_div is not None:
+            return address_div.get_text(strip=True)
+        
+    # Try using div
+    address_span = None
+    divs = soup.find_all('div', class_='OFtgC')
+    for div in divs:
+        address_span = div.find('span', class_='biGQs _P pZUbB KxBGd')  
+        if address_span is not None:
+            return address_span.get_text(strip=True)
+        
+    
+    return None
+
 
 def  scrape_restaurant_info(restaurant_url):
 
@@ -45,8 +61,6 @@ def  scrape_restaurant_info(restaurant_url):
     try:
     
         time.sleep(random.uniform(5, 10))
-
-        # Faire une requête HTTP
         response = requests.get(restaurant_url, headers=headers)
 
         # Vérification du statut de la requête
@@ -55,8 +69,10 @@ def  scrape_restaurant_info(restaurant_url):
 
             # Extraire les informations principales
             nom = soup.find('h1', class_='rRtyp').text.strip() if soup.find('h1', class_='rRtyp') else "Nom non trouvé"
-            localisation = soup.find('div', class_='OFtgC').text.strip() if soup.find('div', class_='OFtgC') else "44 Rue Saint-Jean, 69005 Lyon France"
+            localisation = extract_address(soup)
+            print("localisation", localisation)
             categorie = "Restaurant"
+            
 
             # Extraire les tags et séparer les catégories du prix
             tags_element = soup.find('span', class_=re.compile(r'(VdWAl|HUMGB cPbcf)'))
@@ -112,12 +128,12 @@ def  scrape_restaurant_info(restaurant_url):
 
 
 def scrape_avis(restaurant_url, id_restaurant, max_pages=5):
-    avis_list = []  # Liste pour stocker les avis
+    avis_list = [] 
     page_num = 0  # Numéro de page des avis
-    avis_id = db.select("select max(id_avis)+1 from avis") # Initialiser l'ID des avis, à modifier avec l'ID de la BD une fois stocké
+    avis_id = db.select("select max(id_avis)+1 from avis") 
     avis_id = avis_id[1][0][0] 
 
-    while page_num < max_pages:  # Limiter le nombre de pages
+    while page_num < max_pages:  
         try:
             url = f"{restaurant_url}-or{page_num * 15}"  
             print(f"Scraping des avis pour le restaurant {id_restaurant}, page {page_num + 1}: {url}")
@@ -131,9 +147,8 @@ def scrape_avis(restaurant_url, id_restaurant, max_pages=5):
             soup = BeautifulSoup(response.text, 'html.parser')
 
             # Sélectionner les conteneurs d'avis
-            avis_containers = soup.find_all('div', class_='_c')  # Ajuster la classe si nécessaire
-
-            if not avis_containers:  # Si aucun avis trouvé, on arrête
+            avis_containers = soup.find_all('div', class_='_c')  
+            if not avis_containers:  
                 break
 
             for avis in avis_containers:
@@ -256,7 +271,6 @@ def get_transport_info(lat, lon, radius=500):
     
     if response.status_code == 200:
         data = response.json()
-        # Nombre d'éléments de transport trouvés
         return len(data["elements"])
     else:
         print(f"Erreur lors de la requête Overpass : {response.status_code}")
@@ -284,7 +298,7 @@ def enrich_geographic_data(localisation, id_restaurant):
 
     # Enrichir les données géographiques
     return {
-        "id_localisation": id_localisation,  # Utiliser l'id_restaurant pour lier
+        "id_localisation": id_localisation, 
         "id_restaurant": id_restaurant,
         "localisation": localisation,
         "latitude": lat,
@@ -299,71 +313,82 @@ def enrich_geographic_data(localisation, id_restaurant):
 
 def process_pipeline(url):
     """Pipeline complet pour scraper, nettoyer et insérer un restaurant dans la base de données."""
+
+
+    # Étape 0 : Vérifier si l'URL existe déjà dans la table "restaurants"
+    sanitized_url = url.replace("'", "''")  # Échappement des guillemets simples pour SQL
+    query = f"SELECT * FROM restaurants WHERE url = '{sanitized_url}'"
+    existing_record = db.select(query)
+   
+    if existing_record[1]:
+        print("L'URL existe déjà dans la base de données. Arrêt du pipeline.")
+        return
+
     # Étape 1 : Scraper les infos principales
-    restaurant_info = scrape_restaurant_info(url)
-    restaurant_info = tuple(restaurant_info.values())
-    restaurant_info_without_loc = restaurant_info[:2] + restaurant_info[3:]
-
-
-
-    #print(restaurant_info)
-    if not restaurant_info:
-        raise ValueError("Impossible de scraper les informations principales.")
+    try:
+        restaurant_info = scrape_restaurant_info(url)
+        if not restaurant_info:
+            print("Impossible de scraper les informations principales. Arrêt du pipeline.")
+            return
+        restaurant_info = tuple(restaurant_info.values())
+        restaurant_info_without_loc = restaurant_info[:2] + restaurant_info[3:]
+    except Exception as e:
+        print(f"Erreur lors du scraping des informations principales : {e}")
+        return
     
-    # Étape 2 : Enrichir avec des données géographiques
-    geo_data = enrich_geographic_data(restaurant_info[2], restaurant_info[0])
-    geo_data = tuple(geo_data.values())
-    
-    if not geo_data:
-        raise ValueError("Impossible d'enrichir les données géographiques.")
-    
+   # Étape 2 : Enrichir avec des données géographiques
+    try:
+        geo_data = enrich_geographic_data(restaurant_info[2], restaurant_info[0])
+        if not geo_data:
+            print("Impossible d'enrichir les données géographiques. Arrêt du pipeline.")
+            return
+        geo_data = tuple(geo_data.values())
+    except Exception as e:
+        print(f"Erreur lors de l'enrichissement des données géographiques : {e}")
+        return
+
     # Étape 3 : Scraper les avis
-    avis_data = scrape_avis(url, restaurant_info[0])
-    avis_data= [tuple(avis.values()) for avis in avis_data]
+    try:
+        avis_data = scrape_avis(url, restaurant_info[0])
+        if not avis_data:
+            print("Impossible de scraper les avis. Arrêt du pipeline.")
+            return
+        avis_data = [tuple(avis.values()) for avis in avis_data]
+    except Exception as e:
+        print(f"Erreur lors du scraping des avis : {e}")
+        return
 
-    #print("avis_data", avis_data)
-
-    if not avis_data:
-        raise ValueError("Impossible de scraper les avis.")
     
-    
+    # Étape 4 : Enregistrement dans la base de données
+    try:
+        # Insérer les données dans la table "restaurants"
+        success, message = db.insert("restaurants", [restaurant_info_without_loc], chk_duplicates=True)
+        if not success:
+            print(f"Erreur lors de l'insertion dans 'restaurants': {message}")
+            return
 
-    
-    # Étape 5 : Enregistrer dans la base de données
-    # Insérer les données dans la table "restaurants"
-    success, message = db.insert("restaurants", [restaurant_info_without_loc], chk_duplicates=True)
-    if not success:
-        print(f"Erreur lors de l'insertion dans restaurants: {message}")
-    else:
-        print("Données insérées dans 'restaurants'.")
+        # Insérer les données dans la table "geographie"
+        success, message = db.insert("geographie", [geo_data], chk_duplicates=True)
+        if not success:
+            print(f"Erreur lors de l'insertion dans 'geographie': {message}")
+            return
 
-    # Insérer les données dans la table "geographie"
-    success, message = db.insert("geographie",[geo_data], chk_duplicates=True)
-    if not success:
-        print(f"Erreur lors de l'insertion dans geographie: {message}")
-    else:
-        print("Données insérées dans 'geographie'.")
+        # Insérer les données dans la table "avis"
+        success, message = db.insert("avis", avis_data, chk_duplicates=True)
+        if not success:
+            print(f"Erreur lors de l'insertion dans 'avis': {message}")
+            return
 
-    # Insérer les données dans la table "avis"
-    success, message = db.insert("avis", avis_data, chk_duplicates=True)
-    if not success:
-        print(f"Erreur lors de l'insertion dans avis: {message}")
-    else:
-        print("Données insérées dans 'avis'.")
-
-        
-    print("Pipeline exécuté avec succès.")
+        print("Pipeline exécuté avec succès.")
+    except Exception as e:
+        print(f"Erreur lors de l'enregistrement dans la base de données : {e}")
 
 
+
+#execution du pipeline 
 if __name__ == "__main__":
-        # Définir le chemin de la base de données, relativement au chemin de ce fichier
     db_path = Path("../../data/friands.db")
-
-
-    # Créer une instance de sqlUtils
     db = sqlutils(db_path)
 
-    restaurant_url = "https://www.tripadvisor.fr/Restaurant_Review-g187265-d1605401-Reviews-Le_Vieux_Lyon-Lyon_Rhone_Auvergne_Rhone_Alpes.html"
-
-    
+    restaurant_url = "https://www.tripadvisor.fr/Restaurant_Review-g187265-d25360215-Reviews-Kopain_Cafe-Lyon_Rhone_Auvergne_Rhone_Alpes.html" 
     process_pipeline(restaurant_url)
