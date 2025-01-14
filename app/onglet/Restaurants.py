@@ -166,24 +166,33 @@ with tab2:
 # Afficher les avis du restaurant
 st.write("### Avis des clients")
 
+# Cache un secon pour faire disparaitre les avis
+if "show_avis" not in st.session_state:
+    st.session_state["show_avis"] = False
+
 button_avis = st.button("Découvrir tous les avis")
 
-if button_avis or "filtered_avis" in st.session_state:
-    if button_avis:
-        avis.drop(columns="année", axis=1, inplace=True)
-        avis = avis.sort_values(by="avis.date_avis", ascending=False)
-        avis.columns = ["Date de l'avis", "Titre de l'avis", "Contenu de l'avis", "Note du restaurant"]
-        st.session_state["avis"] = avis
+if button_avis:
+    st.session_state["show_avis"] = not st.session_state["show_avis"]
+
+if st.session_state["show_avis"]:
+    avis.drop(columns="année", axis=1, inplace=True)
+    avis = avis.sort_values(by="avis.date_avis", ascending=False)
+    avis.columns = ["Date de l'avis", "Titre de l'avis", "Contenu de l'avis", "Note du restaurant"]
+    st.session_state["avis"] = avis
 
     avis = st.session_state["avis"]
-
-    col3, col4 = st.columns([1, 1])
+    min_date = avis["Date de l'avis"].min().date()
+    max_date = avis["Date de l'avis"].max().date()
+    
+    col3, col4, col5 = st.columns([1, 1, 1])
     with col3:
-        min_date = avis["Date de l'avis"].min().date()
-        max_date = avis["Date de l'avis"].max().date()
-        debut_date, fin_date = st.date_input("Sélectionnez la plage de dates", [min_date, max_date], label_visibility="visible")
-
+        debut_date = st.date_input("Choissiez votre date de début", min_date,label_visibility="visible")
+    
     with col4:
+        fin_date = st.date_input("Choissiez votre date de fin", max_date,label_visibility="visible")
+
+    with col5:
         unique_notes = avis["Note du restaurant"].unique()
         selected_notes = st.multiselect("Sélectionnez la ou les notes qui vous intéressent", unique_notes)
 
@@ -197,15 +206,15 @@ if button_avis or "filtered_avis" in st.session_state:
             (avis["Date de l'avis"] >= debut_date)
             & (avis["Date de l'avis"] <= fin_date)
             & (avis["Note du restaurant"].isin(selected_notes))
-        ]
+        ].copy()
     else:
         # Ne pas appliquer de filtre sur les notes si aucune note n'est sélectionnée
         filtered_avis = avis[
             (avis["Date de l'avis"] >= debut_date) & (avis["Date de l'avis"] <= fin_date)
-        ]
-
+        ].copy()
     # Formater les dates pour l'affichage
-    filtered_avis.loc[:, "Date de l'avis"] = filtered_avis["Date de l'avis"].dt.strftime('%Y/%m/%d')
+    filtered_avis["Date de l'avis"] = filtered_avis["Date de l'avis"].astype(str)
+    filtered_avis["Date de l'avis"] = pd.to_datetime(filtered_avis["Date de l'avis"]).dt.strftime('%Y/%m/%d')
     filtered_avis.reset_index(drop=True, inplace=True)
 
     # Sauvegarder dans la session
@@ -213,4 +222,3 @@ if button_avis or "filtered_avis" in st.session_state:
 
     # Afficher les datas filtrées
     st.dataframe(filtered_avis, use_container_width=True)
-

@@ -103,18 +103,16 @@ else :
         name="Restaurants"
     ))
 
-    # Mettre à jour le style de la carte
+    # MAJ le style de la carte
     fig.update_layout(
         mapbox_style="open-street-map",
-        mapbox_center={"lat": filtered_restaurants['geographie.latitude'].mean(), "lon": filtered_restaurants['geographie.longitude'].mean()},
+        mapbox_center={"lat": filtered_restaurants['geographie.latitude'].mean(),
+                        "lon": filtered_restaurants['geographie.longitude'].mean()},
         mapbox_zoom=12,
         margin={"r":0, "t":0, "l":0, "b":0},
         hoverlabel=dict(
-        align="left"  # Aligner le texte à gauche
+        align="left"
             )
         )
-
-    # Afficher la carte avec Streamlit
     st.plotly_chart(fig)
-
 
