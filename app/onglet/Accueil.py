@@ -66,17 +66,21 @@ with cols3:
 
     # Filtrer les restaurants en fonction des tags sélectionnés
     if selected_tags:
+
         # Filtrer les restaurants qui contiennent un tag sélectionné
         filtered_restaurants = restaurants[restaurants['restaurants.tags'].apply(
             lambda x: all(tag in x for tag in selected_tags)
         )]
     else:
         filtered_restaurants = restaurants
+
 with cols4:
+    restaurants["restaurants.price"] = restaurants["restaurants.price"].str.strip()
     selected_price = st.multiselect("Choissisez votre fourchette de prix", restaurants["restaurants.price"].unique())
 
     # Filtrer les restaurants en fonction des tags sélectionnés
     if selected_price:
+
         # Filtrer les restaurants qui contiennent un tag sélectionné
         filtered_restaurants = filtered_restaurants[filtered_restaurants['restaurants.price'].isin(selected_price)]
     else:
@@ -103,7 +107,6 @@ else :
         name="Restaurants"
     ))
 
-    # MAJ le style de la carte
     fig.update_layout(
         mapbox_style="open-street-map",
         mapbox_center={"lat": filtered_restaurants['geographie.latitude'].mean(),

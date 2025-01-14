@@ -2,14 +2,14 @@ import streamlit as st
 from pathlib import Path
 import plotly.express as px
 import plotly.graph_objects as go
-from function_app import transform_to_df_join, retrieve_year
+from function_app import transform_to_df_join, retrieve_year, selected_tags_any
 from sqlutils import sqlutils
 
 # Chargement de la base de données
 db_path = Path("data/friands2.db")
 db = sqlutils(db_path)
 
-# Requête nécessaires pour les graphiques
+# Requêtes nécessaires pour les graphiques
 restaurants = transform_to_df_join(db, """SELECT * 
                                    FROM restaurants, geographie
                                    WHERE restaurants.id_restaurant = geographie.id_restaurant;""")
@@ -23,6 +23,7 @@ clients = transform_to_df_join(db, """SELECT avis.nom_utilisateur,
                                FROM restaurants, avis 
                                WHERE restaurants.id_restaurant = avis.id_restaurant ;""")
 
+
 st.markdown("""
     <h1 style="text-align: center;">📊 Comparaison des restaurants 📊</h1>
 """, unsafe_allow_html=True)
@@ -35,16 +36,52 @@ Ici, vous pouvez confronter les différents restaurants entres eux sur différen
          - 🏆 Et même un classement <br>
 Vous pouvez filtrer les résultats pour adapter les graphiques à vos goûts et votre portefeuilles.
 """, unsafe_allow_html=True)
+
+
+# Ajout des filtres
+tags_list = restaurants['restaurants.tags'].str.split(",").explode().str.strip()
+resto_tags = tags_list.unique()
+restaurants["restaurants.price"] = restaurants["restaurants.price"].str.strip()
+resto_prices = restaurants["restaurants.price"].unique()
+
+# Affichage des filtres
+clients_tags = st.multiselect("Filtrer par tags", resto_tags)
+clients_prices = st.multiselect("Filtrer par prix", resto_prices) 
+
+# Filtre en fonction des sélections
+if clients_tags and clients_prices:
+    filtered_restaurants = restaurants[
+        (restaurants["restaurants.price"].isin(clients_prices)) & 
+        (restaurants["restaurants.tags"].apply(lambda x: selected_tags_any(x, clients_tags)))
+    ]
+
+    filtered_clients = clients[
+        (clients["restaurants.price"].isin(clients_prices)) & 
+        (clients["restaurants.tags"].apply(lambda x: selected_tags_any(x, clients_tags)))
+    ]
+elif clients_tags:  # Si seulement des tags ont été sélectionnés
+    filtered_restaurants = restaurants[restaurants["restaurants.tags"].apply(lambda x: selected_tags_any(x, clients_tags))]
+    filtered_clients = clients[clients["restaurants.tags"].apply(lambda x: selected_tags_any(x, clients_tags))]
+elif clients_prices:  # Si seulement des prix ont été sélectionnés
+    filtered_restaurants = restaurants[restaurants["restaurants.price"].isin(clients_prices)]
+    filtered_clients = clients[clients["restaurants.price"].isin(clients_prices)]
+else:  # Si aucun filtre n'est sélectionné, afficher toutes les données
+    filtered_restaurants = restaurants
+    filtered_clients = clients
+
+# Afficher un message si aucun résultat n'est trouvé
+if filtered_restaurants.empty or filtered_clients.empty:
+    st.warning("Aucun restaurant ou client ne correspond aux filtres sélectionnés.")
+
 st.subheader("⭐Note globale⭐")
 
-
 # Calculer le prix moyen de la ville
-note_moyenne = restaurants["restaurants.note_globale"].mean()
+note_moyenne = filtered_restaurants["restaurants.note_globale"].mean()
 
 tab1, tab2 = st.tabs(["Note globale", "Distribution de la Note Gloable"])
 with tab1:
     fig3 = px.bar(
-        restaurants,
+        filtered_restaurants,
         x="restaurants.nom",
         y="restaurants.note_globale",
         title="Comparaison des notes globales",
@@ -61,25 +98,22 @@ with tab1:
 
     st.plotly_chart(fig3)
 with tab2:
-    # Etude de la variabilité de note_globale
     fig5 = px.box(
-        clients,
+        filtered_clients,
         y="avis.note_restaurant",
-        x = "restaurants.nom",
+        x="restaurants.nom",
         title="Variabilité des notes",
-        color = "restaurants.nom",
+        color="restaurants.nom",
         labels={"avis.note_restaurant": "Distribution de la note", 
                         "restaurants.nom": "Nom du restaurant"})
     st.plotly_chart(fig5)
-
 
 st.subheader("🔢 Nombre d'utilisateurs 🔢")
 
 # Appel de la fonction retrieve pour obtenir le nombre de clients par an
 col_to_group = ['année', 'restaurants.nom']
-nb_an = retrieve_year(clients, "avis.date_avis",col_to_group,"avis.nom_utilisateur",'nunique')
+nb_an = retrieve_year(filtered_clients, "avis.date_avis", col_to_group, "avis.nom_utilisateur", 'nunique')
 
-# Graphique pour étudier l'évolution du nombre de clients par an
 fig4 = px.line(nb_an, x='année',
             y='avis.nom_utilisateur',
             color='restaurants.nom',
@@ -89,34 +123,22 @@ fig4 = px.line(nb_an, x='année',
                     "restaurants.nom": "Nom du restaurant"})
 st.plotly_chart(fig4)
 
-
 st.subheader("🏆Classement des restaurants🏆")
 
-# multiselect pour choisir les notes globales
-selected_notes = st.multiselect("Choisissez votre classement", sorted(clients["avis.note_restaurant"].unique(), reverse=True))
+selected_notes = st.multiselect("Choisissez votre classement", sorted(filtered_clients["avis.note_restaurant"].unique(), reverse=True))
 
-# Filtrer les restaurants en fonction des notes globales sélectionnées
 if selected_notes:
-    filtered_clients = clients[clients["avis.note_restaurant"].isin(selected_notes)]
-else:
-    filtered_clients = clients
+    filtered_clients = filtered_clients[filtered_clients["avis.note_restaurant"].isin(selected_notes)]
 
-# Calculer le nombre de notes pour chaque restaurant
 restaurant_counts = filtered_clients.groupby("restaurants.nom")["avis.note_restaurant"].count().reset_index()
 restaurant_counts.columns = ["Nom", "Nombre de notes"]
-
-# Ajouter une colonne de rang basée sur le nombre de notes
 restaurant_counts["Rang"] = restaurant_counts["Nombre de notes"].rank(ascending=False)
-
-# Trier le DataFrame en fonction du rang
 restaurant_counts = restaurant_counts.sort_values(by="Rang").reset_index(drop=True)
 
 col1, col2, col3 = st.columns([2, 1, 2])
 with col1:
-    # Afficher le top 3 des restaurants sous forme de bar chart
-    top_3_restaurants = restaurant_counts.head(3)
-    top_3_restaurants = top_3_restaurants.reindex([1, 0, 2]).reset_index(drop=True)  # Réorganiser pour avoir top2, top1, top3
-    colors = ['silver', 'gold', '#cd7f32'] 
+    top_3_restaurants = restaurant_counts.head(3).reindex([1, 0, 2]).reset_index(drop=True)
+    colors = ['silver', 'gold', '#cd7f32']
 
     fig6 = go.Figure(data=[
         go.Bar(
@@ -133,13 +155,11 @@ with col1:
     )
 
     st.plotly_chart(fig6)
-    if st.button("Voir le classement complet") :
+    if st.button("Voir le classement complet"):
         with col2:
             st.write('')
         with col3:
             st.write('')
             st.write('')
             st.write('')
-            # Afficher le tableau des restaurants avec le rang
             st.dataframe(restaurant_counts[["Nom", "Rang", "Nombre de notes"]])
-

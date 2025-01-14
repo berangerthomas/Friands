@@ -151,3 +151,17 @@ def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
     else:
         raise ValueError("The argument 'fun' must be either 'mean' or 'nunique'")
     return grp_years
+
+# Fonction pour vérifier si au moins un tag correspond
+def selected_tags_any(row_tags, selected_tags):
+    """
+    Vérifie si au moins un tag correspond à un tag sélectionné.
+
+    Args:
+        row_tags (str): Tags de la ligne
+        selected_tags (list): Tags sélectionnés
+    Returns:
+        bool: True si au moins un tag correspond, False sinon
+    """
+    row_tags_set = set(map(str.strip, row_tags.split(","))) 
+    return any(tag in row_tags_set for tag in selected_tags) 
