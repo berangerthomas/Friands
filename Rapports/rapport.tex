@@ -1,0 +1,197 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Rapport sur package R6
+% Version 1 (14/11/2024)
+%
+% Auteurs :
+% Souraya Ahmed Abderemane
+% Lucile Perbet
+% Béranger Thomas
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	Packages
+%----------------------------------------------------------------------------------------
+
+% Classe du document
+\documentclass[10pt,french]{report}
+
+% Packages langue française
+\usepackage[frenchb]{babel}
+% Pour les guillemets en style français
+\usepackage[french=guillemets]{csquotes}
+
+% Saisir des caractères spéciaux et accentués
+\usepackage[utf8]{inputenc}
+% Imprimer des caractères spéciaux et accentués
+\usepackage[T1]{fontenc}
+
+% Améliorer les espacements
+\usepackage{microtype}
+
+\usepackage[a4paper, portrait]{geometry}
+
+% Pour faire des tableaux plus efficacement
+\usepackage{tabularray}
+
+% Pour les symboles des équations mathématiques
+\usepackage{mathtools}
+\usepackage{amssymb}
+
+% Pour charger et afficher des images
+\usepackage{graphicx}
+\graphicspath{{images/}}
+
+
+% Pour représenter l'arborescence du programme
+\usepackage{dirtree}
+
+
+% Gérer les espaces entre paragraphes plus facilement
+\usepackage{parskip}
+\setlength\parindent{0pt}
+
+
+% Polices de caractères
+\usepackage{lmodern}
+%\usepackage{stix2} % font stix 2
+\usepackage{palatino} % font Palatino
+
+
+% Pour créer des conditions dans les commandes customisées
+\usepackage{ifthen}
+
+\usepackage{amsmath}
+\usepackage{longtable}
+
+
+% Commande customisée pour dessiner un cube noir, pour faire séparateur
+\newcommand{\cube}{\raisebox{0.13ex}{\scalebox{0.75}{ $\blacksquare$ }}}
+
+
+% Commande customisée pour les entrées du lexique
+\newcommand{\entreelex}[3][]{%
+	{\large \textbf{\textsc{#2}}} % Entrée (obligatoire)
+	\if\relax\detokenize{#1}\relax % Si #1 est vide
+	\else % Si #1 n'est pas vide
+	\raisebox{0.15ex}{\scalebox{0.7}{$\Diamond$}} % Diamant
+	[#1] % Acronyme (facultatif)
+	\fi
+	\raisebox{0.13ex}{\scalebox{0.75}{$\blacksquare$}} #3 % Définition (obligatoire)
+}
+
+
+% Bibliographie : sous TexStudio, faire F5, puis F8, puis F5 à nouveau (c'est Latex, c'est tout simple)
+\usepackage[style=numeric]{biblatex}
+\addbibresource{Rapport.bib}
+
+
+% Pour faire des hyperliens
+\usepackage[colorlinks=true, linkcolor=NavyBlue]{hyperref}
+% et leur donner une couleur plus sympa que le bleu habituel
+\usepackage[dvipsnames]{xcolor}
+\hypersetup{colorlinks=true, citecolor=NavyBlue}
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+	
+	\begin{titlepage}
+		\centering
+		\includegraphics[width=0.6\textwidth]{icom.png}\par\vspace{0.5cm}
+		{\Large\bfseries Université Lumière Lyon 2}\par
+		\par\vspace{3.5cm}
+		
+		
+		
+		{\Huge\bfseries Application Friands}\par\vspace{0.75cm}
+		{\huge\bfseries Finding Restaurants, Insights And Notably Delectable Spots}\par\vspace{0.75cm}
+		
+		{\Large\itshape }\par\vspace{3.5cm}
+		
+		{\Large\itshape Par}\par
+		{\Large Souraya Ahmed Abderemane}\par
+		{\Large Lucile Perbet}\par
+		{\Large Béranger Thomas}\par\vspace{1cm}
+		
+		{\large\itshape Rapport présenté dans le cadre du}\par
+		{\large Master 2 SISE - Promotion 2024/2025}\par\vspace{1cm}
+		
+		\vfill
+		
+	\end{titlepage}
+	
+	\tableofcontents
+	
+	\setlength{\parskip}{12pt}
+	
+	\begin{abstract}
+		Ce rapport détaille l'implémentation d'une application Streamlit destinés aux lyonnais gourmets.
+	\end{abstract}
+	
+	\chapter{Introduction}
+	
+	\chapter{Scraping}
+	
+	\section{Choix des outils}
+
+	\subsection{API}
+	
+	\subsection{Beautifulsoup}
+	
+	\chapter{Base de données}
+	
+	\subsection{SQLite}
+	
+	Local
+	Suffisant pour ce type d'appli
+	Pas de soucis de rapidité
+	Pas d'accès concurrents
+	
+	\subsection{Classe d'interfaçage}
+	
+	\subsection{Schéma}
+	
+	\chapter{Interface}
+
+	\subsection{Streamlit}
+	
+	\subsection{Cartographie}
+	
+	\subsection{Ajout des restaurants}
+	
+	\subsection{Graphiques avec plotly}
+	
+	Interactifs, téléchargeables, rapides, etc
+	
+	\chapter{NLP - LLM}
+	
+	\subsection{API Mistral}
+	
+	Pour résumé
+	
+	\subsection{Spacy - NLTK}
+	
+	Etude inter-restaurants
+	
+	\subsection{Sentiment analysis}
+	
+	Modèles hugging faces - 5 étoiles pour comparer aux notes des gourmets.
+	
+	\chapter{Docker}
+	
+	\chapter{Augmentation de données}
+	
+	\subsection{Openstreetmap}
+	
+	\begin{itemize}
+		\item restos alentour
+		\item transports alentour
+		\item coord gps
+	\end{itemize}
+	
+	\chapter{Conclusion}
+	
+	La force de l'estomac solide soit avec vous.
+	
+	\end{document}

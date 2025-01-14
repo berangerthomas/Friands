@@ -10,7 +10,8 @@
     - ajout de resto
     - graphiques avec plotly
 - llm / nlp
-    - mistral résumé
+    - mistral : résumé
+    - spacy/nltk : clustering inter restaurants
     - sentiment analysis : modele hugging face
 - docker
 - données open data
@@ -24,6 +25,6 @@
     - comparer sentiment ?
 
 A faire :
-- finir readme
-- faire 2 vidéos
-- docker
+    - finir readme
+    - faire 2 vidéos : install et utilisation
+    - docker
