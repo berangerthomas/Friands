@@ -20,7 +20,7 @@ Il faut compter 15 minutes pour l'exécution complète de ce script.
 Penser à remplir la clé API pour Mistral ci-dessous.
 """
 
-os.environ["MISTRAL_API_KEY"] = "7PdL6AoyIBJDNlZKZPQzEOBpReehekdE"
+os.environ["MISTRAL_API_KEY"] = ""
 
 ###################################
 #### INITIALISATION DE LA BDD #####
