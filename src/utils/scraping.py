@@ -390,5 +390,5 @@ if __name__ == "__main__":
     db_path = Path("../../data/friands.db")
     db = sqlutils(db_path)
 
-    restaurant_url = "https://www.tripadvisor.fr/Restaurant_Review-g187265-d25360215-Reviews-Kopain_Cafe-Lyon_Rhone_Auvergne_Rhone_Alpes.html" 
-    process_pipeline(restaurant_url)
+    # restaurant_url = "https://www.tripadvisor.fr/Restaurant_Review-g187265-d25360215-Reviews-Kopain_Cafe-Lyon_Rhone_Auvergne_Rhone_Alpes.html" 
+    # process_pipeline(restaurant_url)
