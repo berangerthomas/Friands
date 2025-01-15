@@ -43,7 +43,7 @@ if submit_button:
                 for percent_complete in range(100):
                     time.sleep(elapsed_time / 100)
                     progress_bar.progress(percent_complete + 1)
-                process_pipeline(url)
+                #process_pipeline(url)
 
                 st.success(f"Le restaurant a été ajouté avec succès !")
         else:
