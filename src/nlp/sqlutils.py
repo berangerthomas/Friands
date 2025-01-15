@@ -203,7 +203,10 @@ class sqlutils:
             query += f" WHERE {' AND '.join(where)}"
         try:
             self.cursor.execute(query, values)
-            return (True, f"{self.cursor.rowcount} row(s) successfully updated")
+            return (
+                True,
+                f"{self.cursor.rowcount} row(s) successfully updated",
+            )
         except Exception as e:
             return (False, str(e))
 
