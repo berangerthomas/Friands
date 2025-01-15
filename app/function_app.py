@@ -207,6 +207,9 @@ def tags_cleans(tags):
 
 
 def get_db():
+    """
+    Récupère la base de données SQLite
+    """
     db_path = Path("data/friands.db")
     db = sqlutils(db_path)
     return db
