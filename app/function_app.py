@@ -1,5 +1,13 @@
 import pandas as pd
 import numpy as np
+import re
+from pathlib import Path
+import sys
+import os
+from sqlutils import sqlutils
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','src', 'utils')))
+
 
 def transform_to_df_join(db, query):
     """
@@ -110,7 +118,7 @@ def generate_circle(lat, lon, rayon, num_points=100):
     circle_lats = []
     circle_lons = []
     
-    # Convertir le rayon en degrés (approximativement)
+    # Convertir le rayon en degrés
     radius_deg = rayon / 111320  # 1 degré de latitude ~ 111.32 km
     
     # Générer les points autour du centre du cercle
@@ -127,7 +135,6 @@ def generate_circle(lat, lon, rayon, num_points=100):
     
     return circle_lats, circle_lons
 
-import pandas as pd
 def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
     """
     Récupère les données d'une colonne en fonction de l'année.
@@ -141,15 +148,16 @@ def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
     Returns:
         grp_years : Df contenant les données agrégées par année
     """
+    
     df[f"{date_column}"] = pd.to_datetime(df[f"{date_column}"])
-    df["année"] = df[f"{date_column}"].dt.year
+    df.loc[:, "année"] = df[f"{date_column}"].dt.year
     
     if fun == 'mean':
         grp_years = df.groupby(col_to_group)[f'{col_to_analyze}'].mean().reset_index()
     elif fun == 'nunique':
         grp_years = df.groupby(col_to_group)[f'{col_to_analyze}'].nunique().reset_index()
     else:
-        raise ValueError("The argument 'fun' must be either 'mean' or 'nunique'")
+        raise ValueError("L'argument fun doit être soit 'mean' ou 'nunique'.")
     return grp_years
 
 def selected_tags_any(row_tags, selected_tags):
@@ -176,3 +184,29 @@ def retrieve_filter_list(df_col):
     """
     tags_list = df_col.str.split(",").explode().str.strip()
     return tags_list.unique()
+
+def tags_cleans(tags):
+    """
+    Nettoie les tags en supprimant les caractères spéciaux
+
+    Args:       
+        tags (list): Liste des tags
+    Returns:
+        tags_clean (list): Liste des tags nettoyés
+    """
+    if any('€' in tag for tag in tags):
+        # Filtrage des caractères non alphanumériques sauf espaces, accents et "/"
+        tags_clean = [re.sub(r'[^a-zA-Z0-9À-ÿ/ ]', '', tag) for tag in tags]
+        
+        # Suppression des éléments vides
+        tags_clean = [tag for tag in tags_clean if tag]
+    else:
+        # Si aucun signe € n'est trouvé, ne pas modifier les tags
+        tags_clean = tags
+    return tags_clean
+
+
+def get_db():
+    db_path = Path("data/friands.db")
+    db = sqlutils(db_path)
+    return db

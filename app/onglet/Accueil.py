@@ -1,18 +1,9 @@
-import sys 
-import os
-
-# Ajouter le chemin du dossier utils au PATH
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..','src', 'utils')))
-
 import streamlit as st
-from pathlib import Path
 import plotly.graph_objects as go
-from sqlutils import sqlutils
-from function_app import transform_to_df_join, selected_tags_any, retrieve_filter_list
+from function_app import get_db, transform_to_df_join, selected_tags_any, retrieve_filter_list, tags_cleans
 
 # Chargement de la base de données
-db_path = Path("data/friands2.db")
-db = sqlutils(db_path)
+db = get_db()
 
 # Utiliser des colonnes pour aligner l'image et le texte
 col1, col2,col3 = st.columns([1, 1, 4])
@@ -59,9 +50,11 @@ st.markdown("""
 # Récupérer les tags des restaurants
 tags = retrieve_filter_list(restaurants['restaurants.tags'])
 
+clean_tags = tags_cleans(tags)
+
 cols3,cols4 = st.columns([1, 1])
 with cols3:
-    selected_tags = st.multiselect("Sélectionnez les cuisines qui vous intéressent", tags)
+    selected_tags = st.multiselect("Sélectionnez les cuisines qui vous intéressent", clean_tags)
 
     # Filtrer les restaurants en fonction des tags sélectionnés
     if selected_tags:

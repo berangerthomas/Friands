@@ -1,17 +1,11 @@
 import streamlit as st
-import pandas as pd
 import time
-import sys 
-import os
-from pathlib import Path
-import plotly.graph_objects as go
-import pandas as pd
-from function_app import transform_to_df
-from sqlutils import sqlutils
+from function_app import get_db, transform_to_df
+#from scrapping import process_pipeline
 
 # Chargement de la base de données
-db_path = Path("data/friands2.db")
-db = sqlutils(db_path)
+db = get_db()
+
 
 # Récupérer les URLs des restaurants existants
 query=transform_to_df("restaurants",db,"SELECT url FROM restaurants;")
@@ -41,10 +35,6 @@ if submit_button:
                 
                 # Mesurer le temps pris par l'opération d'insertion
                 start_time = time.time()
-                
-                
-                # Vérifier si le restaurant existe déjà
-                query = f"SELECT * FROM restaurants WHERE url = '{url}';"
 
                 # Calculer le temps écoulé
                 elapsed_time = time.time() - start_time
@@ -53,7 +43,8 @@ if submit_button:
                 for percent_complete in range(100):
                     time.sleep(elapsed_time / 100)
                     progress_bar.progress(percent_complete + 1)
-                
+                process_pipeline(url)
+
                 st.success(f"Le restaurant a été ajouté avec succès !")
         else:
             st.error("L'URL doit commencer par 'https://www.tripadvisor.fr/Restaurant_Review' et se terminer par '.html'.")

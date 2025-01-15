@@ -1,14 +1,13 @@
 import streamlit as st
-from function_app import transform_to_df_join, generate_circle, retrieve_year
+from function_app import get_db, transform_to_df_join, generate_circle, retrieve_year
 from pathlib import Path
 import plotly.graph_objects as go
 import pandas as pd
 import plotly.express as px
-from sqlutils import sqlutils
 
 # Chargement de la base de données
-db_path = Path("data/friands2.db")
-db = sqlutils(db_path)
+db = get_db()
+
 restaurants = transform_to_df_join(db, "SELECT * FROM restaurants, geographie WHERE restaurants.id_restaurant = geographie.id_restaurant;")
 
 # Ajouter un selectbox pour choisir un restaurant
