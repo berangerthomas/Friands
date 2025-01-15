@@ -8,7 +8,7 @@ import streamlit as st
 from pathlib import Path
 import plotly.graph_objects as go
 from sqlutils import sqlutils
-from function_app import transform_to_df_join
+from function_app import transform_to_df_join, selected_tags_any, retrieve_filter_list
 
 # Chargement de la base de données
 db_path = Path("data/friands2.db")
@@ -56,9 +56,8 @@ st.markdown("""
     <h1 style="font-size: 25px;">Carte interactive des restaurants de Lyon</h1>
 """, unsafe_allow_html=True)
 
-# Séparer chaque tag à la virgule et transformer en liste d'éléments distincts
-tags_list = restaurants['restaurants.tags'].str.split(",").explode().str.strip()
-tags = tags_list.unique()
+# Récupérer les tags des restaurants
+tags = retrieve_filter_list(restaurants['restaurants.tags'])
 
 cols3,cols4 = st.columns([1, 1])
 with cols3:
@@ -68,15 +67,17 @@ with cols3:
     if selected_tags:
 
         # Filtrer les restaurants qui contiennent un tag sélectionné
-        filtered_restaurants = restaurants[restaurants['restaurants.tags'].apply(
-            lambda x: all(tag in x for tag in selected_tags)
+        filtered_restaurants = restaurants[restaurants['restaurants.tags'].apply(lambda x: selected_tags_any(x, selected_tags)
+        
         )]
     else:
         filtered_restaurants = restaurants
 
 with cols4:
-    restaurants["restaurants.price"] = restaurants["restaurants.price"].str.strip()
-    selected_price = st.multiselect("Choissisez votre fourchette de prix", restaurants["restaurants.price"].unique())
+    # Récupérer les prix des restaurants
+    price = retrieve_filter_list(restaurants['restaurants.price'])
+
+    selected_price = st.multiselect("Choissisez votre fourchette de prix", price)
 
     # Filtrer les restaurants en fonction des tags sélectionnés
     if selected_price:

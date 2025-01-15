@@ -15,7 +15,7 @@ def transform_to_df_join(db, query):
         # Si SELECT * est utilisé, récupérer les colonnes des tables concernées
         if "SELECT *" in query.upper():
             from_part = query.split("FROM")[1].strip()
-            tables_part = from_part.split("WHERE")[0].strip()  # Extrait les tables avant WHERE
+            tables_part = from_part.split("WHERE")[0].strip()
             table_names = [t.strip() for t in tables_part.split(",")]
             
             columns = []
@@ -152,7 +152,6 @@ def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
         raise ValueError("The argument 'fun' must be either 'mean' or 'nunique'")
     return grp_years
 
-# Fonction pour vérifier si au moins un tag correspond
 def selected_tags_any(row_tags, selected_tags):
     """
     Vérifie si au moins un tag correspond à un tag sélectionné.
@@ -165,3 +164,15 @@ def selected_tags_any(row_tags, selected_tags):
     """
     row_tags_set = set(map(str.strip, row_tags.split(","))) 
     return any(tag in row_tags_set for tag in selected_tags) 
+
+def retrieve_filter_list(df_col): 
+    """
+    Preprocesse une colonne pour obtenir une liste unique d'éléments
+
+    Args:
+        df_col (pd.Series): Colonne du DataFrame
+    Returns:
+        np.array: Liste unique des éléments
+    """
+    tags_list = df_col.str.split(",").explode().str.strip()
+    return tags_list.unique()

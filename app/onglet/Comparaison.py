@@ -2,7 +2,7 @@ import streamlit as st
 from pathlib import Path
 import plotly.express as px
 import plotly.graph_objects as go
-from function_app import transform_to_df_join, retrieve_year, selected_tags_any
+from function_app import transform_to_df_join, retrieve_year, selected_tags_any, retrieve_filter_list
 from sqlutils import sqlutils
 
 # Chargement de la base de données
@@ -38,15 +38,13 @@ Vous pouvez filtrer les résultats pour adapter les graphiques à vos goûts et 
 """, unsafe_allow_html=True)
 
 
-# Ajout des filtres
-tags_list = restaurants['restaurants.tags'].str.split(",").explode().str.strip()
-resto_tags = tags_list.unique()
-restaurants["restaurants.price"] = restaurants["restaurants.price"].str.strip()
-resto_prices = restaurants["restaurants.price"].unique()
+# Récupérer les tags et les prix des restaurants
+resto_tags = retrieve_filter_list(restaurants['restaurants.tags'])
+resto_prices=retrieve_filter_list(restaurants['restaurants.price'])
 
 # Affichage des filtres
-clients_tags = st.multiselect("Filtrer par tags", resto_tags)
-clients_prices = st.multiselect("Filtrer par prix", resto_prices) 
+clients_tags = st.sidebar.multiselect("Sélectionnez les types de cuisines", resto_tags)
+clients_prices = st.sidebar.multiselect("Choisissez vos fourchettes de prix", resto_prices) 
 
 # Filtre en fonction des sélections
 if clients_tags and clients_prices:
@@ -148,10 +146,12 @@ with col1:
         )
     ])
 
+    fig6.update_xaxes(tickangle=315)
+
     fig6.update_layout(
         title="Top 3 des restaurants",
         xaxis_title="Nom du restaurant",
-        yaxis_title="Nombre de notes"
+        yaxis_title="Nombre de notes", 
     )
 
     st.plotly_chart(fig6)
