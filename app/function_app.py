@@ -4,9 +4,9 @@ import re
 from pathlib import Path
 import sys
 import os
-from sqlutils import sqlutils
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','src', 'utils')))
+
+from sqlutils import sqlutils
 
 
 def transform_to_df_join(db, query):
@@ -207,6 +207,9 @@ def tags_cleans(tags):
 
 
 def get_db():
+    """
+    Récupère la base de données SQLite
+    """
     db_path = Path("data/friands.db")
     db = sqlutils(db_path)
     return db
