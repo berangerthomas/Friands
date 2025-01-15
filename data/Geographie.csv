@@ -1,11 +1,11 @@
-id_localisation,localisation,latitude,longitude,restaurant_density,transport_count
-1,"93 Rue Masséna, 69006 Lyon France",45.7656776,4.8549475,148,22
-2,"85 rue Massena, 69006 Lyon France",45.7665585,4.8547867,135,17
-3,"86 Quai Perrache, 69002 Lyon France",45.7331898,4.8180424,3,13
-4,"4 Rue du Professeur Pierre Marion, 69005 Lyon France",45.75909,4.8233392,56,10
-5,"6 rue Thomassin, 69002 Lyon France",45.7615932,4.8336684,201,34
-6,"23 Rue de la Charité, 69002 Lyon France",45.7528183,4.831622,93,24
-7,"33 Rue Saint-Jean, 69005 Lyon France",45.7625452,4.8277108,190,18
-8,"25 Montee Saint Barthelemy, 69005 Lyon France",45.7630412,4.8256656,118,12
-9,"4 Rue Pizay, 69001 Lyon France",45.7667395,4.834631,223,38
-10,"3 avenue Berthelot, 69007 Lyon France",45.7477561,4.8343877,48,11
+id_localisation,id_restaurant,localisation,latitude,longitude,restaurant_density,transport_count
+1,1,"93 Rue Masséna, 69006 Lyon France",45.7656776,4.8549475,148,22
+2,2,"85 rue Massena, 69006 Lyon France",45.7665585,4.8547867,135,17
+3,3,"86 Quai Perrache, 69002 Lyon France",45.7331898,4.8180424,3,13
+4,4,"4 Rue du Professeur Pierre Marion, 69005 Lyon France",45.75909,4.8233392,56,10
+5,5,"6 rue Thomassin, 69002 Lyon France",45.7615932,4.8336684,201,34
+6,6,"23 Rue de la Charité, 69002 Lyon France",45.7528183,4.831622,93,24
+7,7,"33 Rue Saint-Jean, 69005 Lyon France",45.7625452,4.8277108,190,18
+8,8,"25 Montee Saint Barthelemy, 69005 Lyon France",45.7630412,4.8256656,118,12
+9,9,"4 Rue Pizay, 69001 Lyon France",45.7667395,4.834631,223,38
+10,10,"3 avenue Berthelot, 69007 Lyon France",45.7477561,4.8343877,48,11
