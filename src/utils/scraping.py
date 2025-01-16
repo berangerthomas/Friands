@@ -49,7 +49,9 @@ def extract_address(soup):
         if address_span is not None:
             return address_span.get_text(strip=True)
 
-    return "248 Rue Paul Bert, 69003 Lyon France"
+    return None
+
+    
 
 
 def scrape_restaurant_info(restaurant_url):
@@ -354,7 +356,23 @@ def process_pipeline(url):
 
     # Étape 1 : Scraper les infos principales
     try:
-        restaurant_info = scrape_restaurant_info(url)
+        attempts = 0
+        max_attempts=5
+
+
+        while attempts < max_attempts:
+            # Appeler la fonction de scraping
+            restaurant_info = scrape_restaurant_info(url)
+            # Vérifier si localisation est trouvée
+            if restaurant_info["total_comments"]!=0 and restaurant_info["localisation"]:
+                print(f"Localisation trouvée après {attempts + 1} tentatives.")
+                break
+            
+            print(f"Tentative {attempts + 1}: Localisation non trouvée. Retrying...")
+            attempts += 1
+           
+
+
         if not restaurant_info:
             print(
                 "Impossible de scraper les informations principales. Arrêt du pipeline."
