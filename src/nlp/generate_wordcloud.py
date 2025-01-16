@@ -156,8 +156,3 @@ def generate_wordcloud(id_restaurant):
 
     # Générer un wordcloud
     makeImage(dico_mots[id_restaurant], script_path, id_restaurant)
-
-
-# Essai
-if __name__ == "__main__":
-    generate_wordcloud(1)
