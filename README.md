@@ -62,5 +62,3 @@ FRIANDS/
     └── references.bib         # Bibliographie
 
 ```
-
-![Friands](https://github.com/berangerthomas/friands/app/assets/logo.png)
