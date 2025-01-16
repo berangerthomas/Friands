@@ -108,11 +108,14 @@ class sqlutils:
             schema_info = self.cursor.execute(
                 f"PRAGMA table_info({table_name})"
             ).fetchall()
-            non_pk_cols = [col[1] for col in schema_info if col[5] == 0]
+            non_pk_cols = [
+                col[1] for col in schema_info if col[5] == 0 and col[1] in column_names
+            ]
             condition_placeholders = " AND ".join([f"{col} = ?" for col in non_pk_cols])
 
             for row in rows:
                 check_values = [row[column_names.index(col)] for col in non_pk_cols]
+
                 if self.cursor.execute(
                     f"SELECT 1 FROM {table_name} WHERE {condition_placeholders}",
                     check_values,

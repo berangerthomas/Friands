@@ -148,7 +148,9 @@ def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
     Returns:
         grp_years : Df contenant les données agrégées par année
     """
-    
+    # suppression de la partie heures:min:sec pour certaines dates
+    df[date_column] = df[date_column].str.split(' ', n=1).str[0] if df[date_column].dtype == 'object' else df[date_column]
+
     df[f"{date_column}"] = pd.to_datetime(df[f"{date_column}"])
     df.loc[:, "année"] = df[f"{date_column}"].dt.year
     
@@ -159,6 +161,8 @@ def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
     else:
         raise ValueError("L'argument fun doit être soit 'mean' ou 'nunique'.")
     return grp_years
+
+
 
 def selected_tags_any(row_tags, selected_tags):
     """
@@ -209,6 +213,9 @@ def tags_cleans(tags):
 def get_db():
     """
     Récupère la base de données SQLite
+
+    Returns :
+        db : bdd sqlutils
     """
     db_path = Path("data/friands.db")
     db = sqlutils(db_path)

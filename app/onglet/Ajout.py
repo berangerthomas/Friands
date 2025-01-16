@@ -1,11 +1,14 @@
 import streamlit as st
 import time
 from function_app import get_db, transform_to_df
-#from scrapping import process_pipeline
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from src.utils.scraping import *
 
 # Chargement de la base de données
 db = get_db()
-
 
 # Récupérer les URLs des restaurants existants
 query=transform_to_df("restaurants",db,"SELECT url FROM restaurants;")
@@ -43,8 +46,7 @@ if submit_button:
                 for percent_complete in range(100):
                     time.sleep(elapsed_time / 100)
                     progress_bar.progress(percent_complete + 1)
-                #process_pipeline(url)
-
+                process_pipeline(url)
                 st.success(f"Le restaurant a été ajouté avec succès !")
         else:
             st.error("L'URL doit commencer par 'https://www.tripadvisor.fr/Restaurant_Review' et se terminer par '.html'.")

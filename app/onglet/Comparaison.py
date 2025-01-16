@@ -87,7 +87,7 @@ with tab1:
 
     # Ajouter une ligne pour le prix moyen de la ville
     fig3.add_hline(y=note_moyenne, line_dash="dot", line_color="red", 
-                annotation_text=f"Note globale de tous les restaurants : {(note_moyenne)}", 
+                annotation_text=f"Note globale de tous les restaurants : {round(note_moyenne,1)}", 
                 annotation_position="top left")
 
     fig3.update_xaxes(tickangle=315)
@@ -102,15 +102,17 @@ with tab2:
         color="restaurants.nom",
         labels={"avis.note_restaurant": "Distribution de la note", 
                         "restaurants.nom": "Nom du restaurant"})
+    fig5.update_xaxes(tickangle=315)
+
     st.plotly_chart(fig5)
 
 st.subheader("🔢 Nombre d'utilisateurs 🔢")
 
 # Appel de la fonction retrieve pour obtenir le nombre de clients par an
 col_to_group = ['année', 'restaurants.nom']
-nb_an = retrieve_year(filtered_clients, "avis.date_avis", col_to_group, "avis.nom_utilisateur", 'nunique')
+nombre_clients_an = retrieve_year(filtered_clients, "avis.date_avis", col_to_group, "avis.nom_utilisateur", 'nunique')
 
-fig4 = px.line(nb_an, x='année',
+fig4 = px.line(nombre_clients_an, x='année',
             y='avis.nom_utilisateur',
             color='restaurants.nom',
             title=f"Nombre d'utilisateurs au fil des ans",
