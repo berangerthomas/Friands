@@ -13,7 +13,7 @@ with col1:
     st.write("") 
 
 with col2:
-    st.image("app/assets/logo.png", width=300)
+    st.image("assets/logo.png", width=300)
 
 with col3:
     st.write("")  # Ligne vide pour aligner le titre à l'image
