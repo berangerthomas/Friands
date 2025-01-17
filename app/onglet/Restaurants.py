@@ -142,7 +142,7 @@ with col7:
 with col8:
     selected_id = selected_data['restaurants.id_restaurant'].values[0]
 
-    file_path = f"app/assets/wordcloud_{selected_id}.png"
+    file_path = f"assets/wordcloud_{selected_id}.png"
     if not os.path.exists(file_path):
         generate_wordcloud(selected_id)
     st.image(file_path, width=600)
