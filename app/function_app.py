@@ -52,16 +52,16 @@ def transform_to_df_join(db, query):
         print("Erreur lors de la récupération des données.")
         return None
 
-# Exemple d'utilisation
-query = """SELECT price, transport_count FROM restaurants, geographie
-           WHERE restaurants.id_restaurant = geographie.id_restaurant
-           AND restaurants.nom = 'KUMA cantine';"""
+def get_db():
+    """
+    Récupère la base de données SQLite
 
-query = """SELECT * FROM restaurants, geographie
-           WHERE restaurants.id_restaurant = geographie.id_restaurant
-           AND restaurants.nom = 'KUMA cantine';"""
-
-# print(transform_to_df(db, query))
+    Returns :
+        db : bdd sqlutils
+    """
+    db_path = Path("data/friands.db")
+    db = sqlutils(db_path)
+    return db
 
 def transform_to_df(table_name, db, query):
     """
@@ -94,10 +94,6 @@ def transform_to_df(table_name, db, query):
         return None
     
     return df
-
-# Exemple d'utilisation
-query = """SELECT price, nom FROM restaurants;"""
-# print(transform_to_df("restaurants", db, query))
 
 
 # Fonction pour générer les coordonnées du cercle
@@ -162,8 +158,6 @@ def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
         raise ValueError("L'argument fun doit être soit 'mean' ou 'nunique'.")
     return grp_years
 
-
-
 def selected_tags_any(row_tags, selected_tags):
     """
     Vérifie si au moins un tag correspond à un tag sélectionné.
@@ -210,13 +204,43 @@ def tags_cleans(tags):
     return tags_clean
 
 
-def get_db():
-    """
-    Récupère la base de données SQLite
 
-    Returns :
-        db : bdd sqlutils
+
+def check_url (url, db):
     """
-    db_path = Path("data/friands.db")
-    db = sqlutils(db_path)
-    return db
+    Vérifie si l'URL du restaurant est déjà dans la base de données
+
+    Args:
+        url (str): URL du restaurant
+        db : objet sqlutils
+    Returns:
+        bool: True si l'URL est déjà dans la base, False
+    """
+    query = transform_to_df("restaurants",db,"SELECT url FROM restaurants;")
+    existing_urls = query['url'].tolist()
+    return url in existing_urls
+
+def check_no_null (db, column_name, table_name):
+    """
+    Vérifie qu'une colonne ne possède plus de valeurs nulles.
+
+    Args:
+        db: Instance de la base de données.
+        column_name (str): Nom de la colonne à vérifier.
+        table_name (str): Nom de la table contenant la colonne.
+
+    Returns:
+        bool: True si la colonne ne contient plus de valeurs nulles, False sinon.
+    """
+    query = f"SELECT COUNT(*) FROM {table_name} WHERE {column_name} IS NULL"
+    success, result = db.select(query)
+    
+    if not success:
+        raise Exception(f"""Erreur lors de l'exécution de la requête la colonne {column_name} de {table_name} contient des valeurs nulls :
+                        \n {result}""")
+    
+    return result[0][0] == 0
+
+
+
+

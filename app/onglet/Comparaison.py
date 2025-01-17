@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from function_app import get_db, transform_to_df_join, retrieve_year, selected_tags_any, retrieve_filter_list, tags_cleans
+from function_app import get_db, transform_to_df_join, retrieve_year, selected_tags_any, retrieve_filter_list
 
 # Chargement de la base de données
 db = get_db()
@@ -37,11 +37,10 @@ Vous pouvez filtrer les résultats pour adapter les graphiques à vos goûts et 
 
 # Récupérer les tags et les prix des restaurants
 resto_tags = retrieve_filter_list(restaurants['restaurants.tags'])
-clean_tags = tags_cleans(resto_tags)
 resto_prices=retrieve_filter_list(restaurants['restaurants.price'])
 
 # Affichage des filtres
-clients_tags = st.sidebar.multiselect("Sélectionnez les types de cuisines", clean_tags)
+clients_tags = st.sidebar.multiselect("Sélectionnez les types de cuisines", resto_tags)
 clients_prices = st.sidebar.multiselect("Choisissez vos fourchettes de prix", resto_prices) 
 
 # Filtre en fonction des sélections

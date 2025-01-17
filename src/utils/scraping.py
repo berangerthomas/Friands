@@ -54,7 +54,7 @@ def extract_address(soup):
     
 
 
-def scrape_restaurant_info(restaurant_url):
+def scrape_restaurant_info(restaurant_url, db):
 
     id_restaurant = db.select("select max(id_restaurant)+1 from restaurants")
     id_restaurant = id_restaurant[1][0][0]
@@ -133,7 +133,7 @@ def scrape_restaurant_info(restaurant_url):
         return None
 
 
-def scrape_avis(restaurant_url, id_restaurant, max_pages=5):
+def scrape_avis(restaurant_url, id_restaurant, db, max_pages = 5):
     avis_list = []
     page_num = 0  # Numéro de page des avis
     success, avis_id = db.select("select max(id_avis)+1 from avis")
@@ -310,7 +310,7 @@ def get_transport_info(lat, lon, radius=500):
         return 0
 
 
-def enrich_geographic_data(localisation, id_restaurant):
+def enrich_geographic_data(localisation, id_restaurant, db):
     """Récupère les données géographiques pour la table `geographie`."""
     id_localisation = db.select("select max(id_localisation)+1 from geographie")
     id_localisation = id_localisation[1][0][0]
@@ -340,7 +340,7 @@ def enrich_geographic_data(localisation, id_restaurant):
     }
 
 
-def process_pipeline(url):
+def process_pipeline(url, db):
     """Pipeline complet pour scraper, nettoyer et insérer un restaurant dans la base de données."""
 
     # Étape 0 : Vérifier si l'URL existe déjà dans la table "restaurants"
@@ -355,14 +355,15 @@ def process_pipeline(url):
     #     return
 
     # Étape 1 : Scraper les infos principales
+
     try:
         attempts = 0
-        max_attempts=5
+        max_attempts=10
 
 
         while attempts < max_attempts:
             # Appeler la fonction de scraping
-            restaurant_info = scrape_restaurant_info(url)
+            restaurant_info = scrape_restaurant_info(url, db)
             # Vérifier si localisation est trouvée
             if restaurant_info["total_comments"]!=0 and restaurant_info["localisation"]:
                 print(f"Localisation trouvée après {attempts + 1} tentatives.")
@@ -370,7 +371,7 @@ def process_pipeline(url):
             
             print(f"Tentative {attempts + 1}: Localisation non trouvée. Retrying...")
             attempts += 1
-           
+        
 
 
         if not restaurant_info:
@@ -386,7 +387,7 @@ def process_pipeline(url):
 
     # Étape 2 : Enrichir avec des données géographiques
     try:
-        geo_data = enrich_geographic_data(restaurant_info[2], restaurant_info[0])
+        geo_data = enrich_geographic_data(restaurant_info[2], restaurant_info[0], db)
         if not geo_data:
             print("Impossible d'enrichir les données géographiques. Arrêt du pipeline.")
             return
@@ -397,7 +398,7 @@ def process_pipeline(url):
 
     # Étape 3 : Scraper les avis
     try:
-        avis_data = scrape_avis(url, restaurant_info[0])
+        avis_data = scrape_avis(url, restaurant_info[0], db)
         if not avis_data:
             print("Impossible de scraper les avis. Arrêt du pipeline.")
             return
@@ -456,15 +457,15 @@ def process_pipeline(url):
         print("Pipeline exécuté avec succès.")
     except Exception as e:
         print(f"Erreur lors de l'enregistrement dans la base de données : {e}")
+ 
 
+# # execution du pipeline
+# if __name__ == "__main__":
+#     db_path = Path("data/friands.db")
+#     db = sqlutils(db_path)
+#     import sys
+#     import os
+#     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','src', 'utils')))
 
-# execution du pipeline
-if __name__ == "__main__":
-    db_path = Path("data/friands.db")
-    db = sqlutils(db_path)
-    import sys
-    import os
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','src', 'utils')))
-
-    restaurant_url = "https://www.tripadvisor.fr/Restaurant_Review-g187265-d25360215-Reviews-Kopain_Cafe-Lyon_Rhone_Auvergne_Rhone_Alpes.html"
-    process_pipeline(restaurant_url)
+#     restaurant_url = "https://www.tripadvisor.fr/Restaurant_Review-g187265-d25360215-Reviews-Kopain_Cafe-Lyon_Rhone_Auvergne_Rhone_Alpes.html"
+#     process_pipeline(restaurant_url)

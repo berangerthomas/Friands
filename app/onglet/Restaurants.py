@@ -2,11 +2,22 @@ import streamlit as st
 from function_app import get_db, transform_to_df_join, generate_circle, retrieve_year
 import plotly.graph_objects as go
 import pandas as pd
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..')))
+
+from src.nlp.generate_wordcloud import *
 
 # Chargement de la base de données
 db = get_db()
 
+# Récupérer les données des restaurants et des avis
 restaurants = transform_to_df_join(db, "SELECT * FROM restaurants, geographie WHERE restaurants.id_restaurant = geographie.id_restaurant;")
+
+avis_requete = transform_to_df_join(db, f"""SELECT avis.date_avis, avis.titre_avis, avis.contenu_avis, avis.note_restaurant, avis.label, restaurants.nom 
+                                        FROM restaurants, avis 
+                                        WHERE restaurants.id_restaurant = avis.id_restaurant;""")
 
 # Ajouter un selectbox pour choisir un restaurant
 st.markdown("""
@@ -19,6 +30,7 @@ selected_restaurant = st.selectbox("Choisissez un restaurant", restaurants["rest
 
 # Filtrer les données en fonction du restaurant sélectionné
 selected_data = restaurants[restaurants["restaurants.nom"] == selected_restaurant]
+avis = avis_requete[avis_requete["restaurants.nom"] == selected_restaurant].copy()
 
 col1, col2 = st.columns([1, 2])
 
@@ -29,8 +41,8 @@ with col1:
     st.write(f"**Type de Cuisine** : {selected_data['restaurants.tags'].values[0]}")
     st.write(f"**Prix** : {selected_data['restaurants.price'].values[0]}")
     st.write(f"**Note globale** : {selected_data['restaurants.note_globale'].values[0]}")
-    st.write(f"**Nombre d'avis** : {selected_data['restaurants.total_comments'].values[0]}")
-    st.write(f"**Nombre de transports à proximité** : {selected_data['geographie.transport_count'].values[0]}")
+    st.write(f"**Nombre d'avis** : {avis['avis.contenu_avis'].count()}")
+    st.write(f"**Nombre de transports ans un rayon de 500 mètres** : {selected_data['geographie.transport_count'].values[0]}")
     st.write(f"**Nombre de restaurants dans un rayon de 500 mètres** : {selected_data['geographie.restaurant_density'].values[0]}")
     st.markdown(f"**Pour plus d'informations sur {selected_restaurant}** [cliquez ici]({selected_data['restaurants.url'].values[0]})")
 
@@ -82,6 +94,37 @@ with col2:
 
     # Afficher avec Streamlit
     st.plotly_chart(fig)
+st.write("")
+st.write("")
+st.write("")
+col6, col7, col8 = st.columns([3,1,3])
+with col6:
+    st.subheader("Résumé des avis clients du restaurant")
+    st.markdown(
+        f"""
+        <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
+            {selected_data['restaurants.summary'].values[0]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col7:
+    st.write("")
+    
+with col8:
+    selected_id = selected_data['restaurants.id_restaurant'].values[0]
+
+    file_path = f"app/assets/wordcloud_{selected_id}.png"
+    if not os.path.exists(file_path):
+        generate_wordcloud(selected_id)
+    st.image(file_path, width=600)
+
+
+
+st.write("")
+st.write("")
+st.write("")
 
 st.subheader("Analyse temporelle des notes globales")
 
@@ -89,12 +132,11 @@ st.subheader("Analyse temporelle des notes globales")
 tab1, tab2 = st.tabs(["Analyse par année", "Focus par mois"])
 
 with tab1:
-    avis = transform_to_df_join(db, f"SELECT avis.date_avis, avis.titre_avis, avis.contenu_avis, avis.note_restaurant FROM restaurants, avis WHERE restaurants.id_restaurant = avis.id_restaurant AND restaurants.nom = '{selected_restaurant}';")
     
+    avis.drop(columns="restaurants.nom", axis=1, inplace=True)
     # Récupérer les données par année
-    moyenne_par_an = retrieve_year(avis, "avis.date_avis","année" ,"avis.note_restaurant", "mean")
+    moyenne_par_an = retrieve_year(avis, "avis.date_avis", "année" ,"avis.note_restaurant", "mean")
 
-    # Créer la figure
     fig = go.Figure()
 
     # Ajouter une trace de ligne
@@ -147,11 +189,99 @@ with tab2:
         yaxis_title=f'Note globale moyenne pour l\'année {selected_year}'
     )
     st.plotly_chart(fig_mois)
+tab1, tab2, tab3 = st.tabs(["Distributions", "Matrice de Confusion", "Analyse des Écarts"])
+with tab1:
+    fig = go.Figure()
+
+# Histogramme pour les prédictions
+fig.add_trace(go.Histogram(
+    x=avis['avis.label'],
+    name="Prédictions",
+    xbins=dict(start=1, end=5, size=0.5),
+    marker_color='blue',
+    opacity=0.7
+))
+
+# Histogramme pour les notes utilisateurs
+fig.add_trace(go.Histogram(
+    x=avis['avis.note_restaurant'],
+    name="Notes Utilisateurs",
+    xbins=dict(start=1, end=5, size=0.5),
+    marker_color='orange',
+    opacity=0.7
+))
+
+# Mise en forme
+fig.update_layout(
+    barmode='group',
+    xaxis_title="Notes (1 à 5)",
+    yaxis_title="Nombre d'Avis",
+    title="Distribution des Prédictions et des Notes Utilisateurs",
+    legend_title="Source",
+    template="plotly_white"
+)
+
+st.plotly_chart(fig)
+
+
+with tab2:
+
+    avis['ecart'] = avis['avis.label'] - avis['avis.note_restaurant']
+
+
+    fig = go.Figure()
+
+    # Histogramme des écarts
+    fig.add_trace(go.Histogram(
+        x=avis['ecart'],
+        xbins=dict(start=-4, end=4, size=1),
+        marker_color='purple',
+        opacity=0.75
+    ))
+
+    # Mise en forme
+    fig.update_layout(
+        title="Distribution des Écarts (Prédictions - Notes Utilisateurs)",
+        xaxis_title="Écart",
+        yaxis_title="Nombre d'Avis",
+        template="plotly_white"
+    )
+
+    st.plotly_chart(fig)
+
+    grouped = avis.groupby("avis.note_restaurant")["avis.label"].mean().reset_index()
+
+    st.write("### Moyenne des Prédictions par Note Utilisateur")
+
+    fig = go.Figure()
+
+    # Barres représentant les moyennes
+    fig.add_trace(go.Bar(
+        x=grouped['avis.note_restaurant'],
+        y=grouped['avis.label'],
+        marker_color='teal',
+        name="Moyenne des Prédictions"
+    ))
+
+    # Mise en forme
+    fig.update_layout(
+        title="Prédiction Moyenne par Note Utilisateur",
+        xaxis_title="Notes Utilisateurs",
+        yaxis_title="Prédiction Moyenne",
+        template="plotly_white"
+    )
+
+    st.plotly_chart(fig)
+
+
+
+
+
 
 # Afficher les avis du restaurant
 st.write("### Avis des clients")
 
-# Cache un secon pour faire disparaitre les avis
+# Cache le bouton pour faire disparaitre les avis
 if "show_avis" not in st.session_state:
     st.session_state["show_avis"] = False
 
@@ -163,7 +293,7 @@ if button_avis:
 if st.session_state["show_avis"]:
     avis.drop(columns="année", axis=1, inplace=True)
     avis = avis.sort_values(by="avis.date_avis", ascending=False)
-    avis.columns = ["Date de l'avis", "Titre de l'avis", "Contenu de l'avis", "Note du restaurant"]
+    avis.columns = ["Date de l'avis", "Titre de l'avis", "Contenu de l'avis", "Note du restaurant", "Note Label"]
     st.session_state["avis"] = avis
 
     avis = st.session_state["avis"]
