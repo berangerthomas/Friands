@@ -163,3 +163,6 @@ cython_debug/
 data/friands2.db-journal
 data/friands.db-journal
 data/friands.db
+src/utils/scraping_main.py
+src/utils/sqlutils_test.py
+src/utils/sqlutils_test.py
