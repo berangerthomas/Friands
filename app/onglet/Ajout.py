@@ -14,7 +14,13 @@ db = get_db()
 query = transform_to_df("restaurants",db,"SELECT url FROM restaurants;")
 existing_urls = query['url'].tolist()
 
-st.title("📥 Ajouter un nouveau restaurant 📥")
+st.markdown("""
+    <h1 style="font-size: 36px; color: #3C6E47; text-align: center; font-family: 'Arial', sans-serif;">
+        📥 <span style="font-weight: bold;">Ajouter un nouveau restaurant</span> 📥
+    </h1>
+  
+""", unsafe_allow_html=True)
+
 st.write("""Vous pouvez ajouter un nouveau restaurant à la base de données en remplissant en entrant le lien de votre restaurant préféré TripAdvisor. <br>
             Pour cela, rendez-vous sur la page du restaurant [TripAdvisor](https://www.tripadvisor.fr/), copiez l'URL et collez-la dans le champ ci-dessous. <br>
             L'opération prends plusieurs minutes. <br>
