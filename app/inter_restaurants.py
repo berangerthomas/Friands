@@ -176,6 +176,3 @@ def plot_restaurant_similarities():
 
     fig.update_traces(textposition="top center")
     fig.show()
-
-
-plot_restaurant_similarities()
