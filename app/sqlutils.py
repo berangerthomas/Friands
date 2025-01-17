@@ -90,13 +90,6 @@ class sqlutils:
             It will not insert any rows if a duplicate is found.
         """
 
-        # if column_names:
-        #     # Vérifier que les colonnes passées en argument correspondent au schéma de la table
-        #     if len(rows[0]) != len(column_names):
-        #         return (
-        #             False,
-        #             f"Data length ({len(rows[0])}) does not match number of columns ({len(column_names)}) provided",
-        #         )
         if not column_names:
             # Si aucune colonne fournie, utiliser toutes les colonnes de la table
             schema_info = self.cursor.execute(
@@ -112,18 +105,38 @@ class sqlutils:
 
         if chk_duplicates:
             # Vérifier si des enregistrements existent déjà
-            condition_placeholders = " AND ".join(
-                [f"{col} = ?" for col in column_names]
-            )
+            schema_info = self.cursor.execute(
+                f"PRAGMA table_info({table_name})"
+            ).fetchall()
+            non_pk_cols = [
+                col[1] for col in schema_info if col[5] == 0 and col[1] in column_names
+            ]
+            condition_placeholders = " AND ".join([f"{col} = ?" for col in non_pk_cols])
+
             for row in rows:
+                check_values = [row[column_names.index(col)] for col in non_pk_cols]
+
                 if self.cursor.execute(
-                    f"SELECT 1 FROM {table_name} WHERE {condition_placeholders}", row
+                    f"SELECT 1 FROM {table_name} WHERE {condition_placeholders}",
+                    check_values,
                 ).fetchone():
                     self.db.rollback()
                     return (
                         False,
                         f"doublon trouvé dans la table '{table_name}' : {row}",
                     )
+            # condition_placeholders = " AND ".join(
+            #     [f"{col} = ?" for col in column_names]
+            # )
+            # for row in rows:
+            #     if self.cursor.execute(
+            #         f"SELECT 1 FROM {table_name} WHERE {condition_placeholders}", row
+            #     ).fetchone():
+            #         self.db.rollback()
+            #         return (
+            #             False,
+            #             f"doublon trouvé dans la table '{table_name}' : {row}",
+            #         )
 
         try:
             placeholders = ", ".join(["?"] * len(column_names))
@@ -286,4 +299,5 @@ class sqlutils:
             even if the object is not explicitly closed.
         """
         self.commit()
+        self.cursor.close()
         self.db.close()
