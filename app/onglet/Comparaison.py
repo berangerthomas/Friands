@@ -22,17 +22,49 @@ clients = transform_to_df_join(db, """SELECT avis.nom_utilisateur,
 
 
 st.markdown("""
-    <h1 style="text-align: center;">📊 Comparaison des restaurants 📊</h1>
+    <h1 style="text-align: center; font-size: 40px; font-family: 'Arial', sans-serif; color: #3C6E47; 
+              font-weight: bold;"> Comparaison des restaurants sur différents aspects </h1>
 """, unsafe_allow_html=True)
 
+# Afficher les aspects des restaurants
+cols1, cols2, cols3 = st.columns([1, 1, 1])
+
+with cols1:
+    st.markdown("""
+        <div style="background:linear-gradient(to right, #ffd166, #f0f9b2);; padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
+            <h3 style="color: #fff; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 18px;">
+                ⭐ La note du restaurant
+            </h3>
+        </div>
+    """, unsafe_allow_html=True)
+
+with cols2:
+    st.markdown("""
+        <div style="background: linear-gradient(to right, #ffd166, #ffb74d); padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
+            <h3 style="color: #fff; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 18px;">
+                🔢 Le nombre d'utilisateurs
+            </h3>
+        </div>
+    """, unsafe_allow_html=True)
+
+with cols3:
+    st.markdown("""
+        <div style="background: linear-gradient(to right, #b5e48c, #f0f9b2); padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
+            <h3 style="color: #fff; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 18px;">
+                🏆 Le classement
+            </h3>
+        </div>
+    """, unsafe_allow_html=True)
+
+# Petit texte introductif sous les blocs
 st.markdown("""
-Bienvenue sur la page de comparaison des restaurants. 
-Ici, vous pouvez confronter les différents restaurants entres eux sur différents aspects : <br>
-         - ⭐La note du restaurant <br>
-         - 🔢Le nombre d'utilisateurs <br>
-         - 🏆 Et même un classement <br>
-Vous pouvez filtrer les résultats pour adapter les graphiques à vos goûts et votre portefeuilles.
+    <div style=" padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
+        <p style="font-size: 16px; line-height: 1.6; color: #000;">
+            Vous pouvez filtrer les résultats pour adapter les graphiques à vos goûts et à votre portefeuille.
+        </p>
+    </div>
 """, unsafe_allow_html=True)
+
 
 
 # Récupérer les tags et les prix des restaurants

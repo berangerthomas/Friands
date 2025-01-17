@@ -1,5 +1,7 @@
 import streamlit as st
 
+
+
 # Définition des onglets
 accueil = st.Page("onglet/Accueil.py", title=" 🏠 Accueil")
 comparaison = st.Page("onglet/Comparaison.py", title=" 📊 Comparaison")
