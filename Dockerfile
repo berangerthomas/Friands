@@ -1,6 +1,16 @@
 # Utiliser Python 3.11 comme image de base
 FROM python:3.11-slim
 
+# Installation des dépendances système avec la configuration des locales
+RUN apt-get update && apt-get install -y locales && \
+    echo "fr_FR.UTF-8 UTF-8" >> /etc/locale.gen && \
+    locale-gen fr_FR.UTF-8
+
+# Configurer les variables d'environnement pour les locales
+ENV LANG fr_FR.UTF-8
+ENV LANGUAGE fr_FR:fr
+ENV LC_ALL fr_FR.UTF-8
+
 # Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
@@ -17,4 +27,4 @@ COPY app/ /app
 EXPOSE 8501
 
 # Commande pour lancer l'application Streamlit
-CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=localhost"]
