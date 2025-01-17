@@ -1,6 +1,6 @@
 import streamlit as st
 import plotly.graph_objects as go
-from function_app import get_db, transform_to_df_join, selected_tags_any, retrieve_filter_list, tags_cleans
+from function_app import get_db, transform_to_df_join,selected_tags_any, retrieve_filter_list, tags_cleans
 
 # Chargement de la base de données
 db = get_db()
@@ -22,8 +22,11 @@ with col3:
 
 
 
-# Charger les données de la table restaurants et la table géograohie
-restaurants = transform_to_df_join(db, "SELECT * FROM restaurants, geographie WHERE restaurants.id_restaurant = geographie.id_restaurant;")
+# Charger les données de la table restaurants et la table géographie
+restaurants = transform_to_df_join(db, f"""SELECT avis.id_avis, restaurants.tags, restaurants.price, restaurants.nom, restaurants.note_globale, geographie.localisation, geographie.latitude, geographie.longitude 
+                                   FROM restaurants, geographie, avis 
+                                   WHERE restaurants.id_restaurant = geographie.id_restaurant
+                                   AND restaurants.id_restaurant = avis.id_restaurant;""")
 
 # Afficher le nombre de restaurants et de commentaires
 cols1, cols2 = st.columns([1, 1])
@@ -32,7 +35,7 @@ with cols1:
     st.markdown(f"""
         <div style="background: linear-gradient(to right, #b5e48c, #f0f9b2); padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
             <h2 style="color: #333; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 22px;">
-                <em>Friands</em> compare <span style="color: #f09e3f;">{len(restaurants)}</span> restaurants 🍴
+                <em>Friands</em> compare <span style="color: #f09e3f;">{restaurants['restaurants.nom'].nunique()}</span> restaurants 🍴
             </h2>
         </div>
     """, unsafe_allow_html=True)
@@ -41,7 +44,7 @@ with cols2:
     st.markdown(f"""
         <div style="background: linear-gradient(to right, #ffd166, #f0f9b2); padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
             <h2 style="color: #333; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 22px;">
-                Et analyse <span style="color: #f09e3f;">{round(restaurants['restaurants.total_comments'].sum())}</span> commentaires
+                Et analyse <span style="color: #f09e3f;">{len(restaurants)}</span> commentaires
             </h2>
         </div>
     """, unsafe_allow_html=True)
@@ -55,13 +58,11 @@ st.markdown("""
 # Récupérer les tags des restaurants
 tags = retrieve_filter_list(restaurants['restaurants.tags'])
 
-clean_tags = tags_cleans(tags)
-
 
 
 cols3,cols4 = st.columns([1, 1])
 with cols3:
-    selected_tags = st.multiselect("Sélectionnez les cuisines qui vous intéressent", clean_tags)
+    selected_tags = st.multiselect("Sélectionnez les cuisines qui vous intéressent", tags)
 
     # Filtrer les restaurants en fonction des tags sélectionnés
     if selected_tags:
