@@ -1,16 +1,19 @@
 import streamlit as st
 from function_app import get_db, transform_to_df, check_url
 import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from src.utils.scraping import *
-from src.nlp.summary_generator import *
-from src.nlp.sentiment_analysis import *
+
+from scraping import *
+from summary_generator import *
+from sentiment_analysis import *
+from generate_wordcloud import *
+
 
 # Chargement de la base de données
 db = get_db()
 
 # Récupérer les URLs des restaurants existants
+print(db.select("SELECT nom FROM restaurants"))
+
 query = transform_to_df("restaurants",db,"SELECT url FROM restaurants;")
 existing_urls = query['url'].tolist()
 
@@ -57,22 +60,22 @@ if submit_button:
                     cle_api_mistral = "wOB1K35GugrbguMCVZxQvs6imjLn99Gr"
                     
                     # Récupérer l'identifiant du restaurant
-                    success, id_resto = db.select("SELECT id_restaurant FROM restaurants")
+                    success, id_resto = db.select("SELECT max(id_restaurant) FROM restaurants")
 
                     # Fermuture de la base pour éviter d'être bloqué par une autre requête
                     db.__del__()
                     try : 
-                        for row in id_resto :
 
-                            id_restaurant = row[0]
-                            success, message = generate_summary(id_restaurant, cle_api_mistral, nb_mois=18)
+                        for row in id_resto :
+                            success, message = generate_summary((row[0]), cle_api_mistral, nb_mois=18)
                             
                             if success:
-                                print(f"Résumé généré pour le restaurant {id_restaurant} : {message}")
+                                print(f"Résumé généré pour le restaurant {(row[0])} : {message}")
                             else:
-                                print(f"Erreur pour le restaurant {id_restaurant} : {message}")
+                                print(f"Erreur pour le restaurant {(row[0])} : {message}")
+                    
                     except Exception as e:
-                        placeholder_success.write(f"Erreur lors de la génération des résumés : {e}")
+                        placeholder_success.error(f"Erreur lors de la génération des résumés : {e}")
                         placeholder_info.empty()  
 
                     try :
@@ -81,19 +84,33 @@ if submit_button:
 
                         for ligne in id_resto :
 
-                            id_restaurant = ligne[0]
-                            success, message = generate_label(id_restaurant)
+                            success, message = generate_label(ligne[0])
                             
                             if success:
-                                print(f"Label pour {id_restaurant} : {message}")
+                                print(f"Label pour {ligne[0]} : {message}")
                             else:
-                                print(f"Erreur pour le restaurant {id_restaurant} : {message}")
+                                print(f"Erreur pour le restaurant {ligne[0]} : {message}")
+                    
+
+                    except Exception as e:
+                        placeholder_success.error(f"Erreur lors de la génération des labels : {e}")
+                        placeholder_info.empty()
+                        
+                    try : 
+                        placeholder_success.success("Calcul de la note de sentiment effectué avec succès !")
+                        placeholder_info.write("Génération du Wordcloud en cours...")
+
+                        if success:
+                            for row in id_resto:
+                                file_path = f"assets/wordcloud_{row[0]}.png"
+                                if not os.path.exists(file_path):
+                                    generate_wordcloud(row[0])
                         placeholder_info.empty()
                         placeholder_success.success("""Calcul de note de sentiment effectué avec succès !
                                                             Retournez sur la page de votre choix pour en apprendre plus sur ce nouveau restaurant.""")
                     
                     except Exception as e:
-                            placeholder_success.write(f"Erreur lors de la génération des labels : {e}")
+                            placeholder_success.error(f"Erreur lors de la génération du WordCloud : {e}")
                             placeholder_info.empty()
                                 
                 else : 

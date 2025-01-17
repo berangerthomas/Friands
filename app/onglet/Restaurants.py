@@ -5,9 +5,7 @@ import pandas as pd
 import os
 import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..')))
-
-from src.nlp.generate_wordcloud import *
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..')))
 
 # Chargement de la base de données
 db = get_db()
@@ -45,7 +43,6 @@ avis = avis_requete[avis_requete["restaurants.nom"] == selected_restaurant].copy
 
 col1, col2 = st.columns([1, 2])
 
-# Afficher les informations du restaurant sélectionné
 # Afficher les informations du restaurant sélectionné avec style
 with col1:
     st.markdown(f"""
@@ -60,7 +57,7 @@ with col1:
                 <strong style="color: #f09e3f; font-size: 14px;">Prix :</strong> {selected_data['restaurants.price'].values[0]}<br>
                 <strong style="color: #f09e3f; font-size: 14px;">Note globale :</strong> {selected_data['restaurants.note_globale'].values[0]} ⭐<br>
                 <strong style="color: #f09e3f; font-size: 14px;">Nombre d'avis :</strong> {avis['avis.contenu_avis'].count()}<br>
-                <strong style="color: #f09e3f; font-size: 14px;">Transports ans un rayon de 500 mètres :</strong> {selected_data['geographie.transport_count'].values[0]} 🚇<br>
+                <strong style="color: #f09e3f; font-size: 14px;">Transports dans un rayon de 500 mètres :</strong> {selected_data['geographie.transport_count'].values[0]} 🚇<br>
                 <strong style="color: #f09e3f; font-size: 14px;">Restaurants dans un rayon de 500m :</strong> {selected_data['geographie.restaurant_density'].values[0]} 🍴
             </p>
             <div style="text-align: center; margin-top: 10px;">
@@ -141,11 +138,8 @@ with col7:
     
 with col8:
     selected_id = selected_data['restaurants.id_restaurant'].values[0]
+    st.image(f"assets/wordcloud_{selected_id}.png", width=600)
 
-    file_path = f"app/assets/wordcloud_{selected_id}.png"
-    if not os.path.exists(file_path):
-        generate_wordcloud(selected_id)
-    st.image(file_path, width=600)
 
 
 
@@ -216,93 +210,64 @@ with tab2:
         yaxis_title=f'Note globale moyenne pour l\'année {selected_year}'
     )
     st.plotly_chart(fig_mois)
-tab1, tab2, tab3 = st.tabs(["Distributions", "Matrice de Confusion", "Analyse des Écarts"])
+tab1, tab2 = st.tabs(["Distributions", "Analyse des écarts"])
+
 with tab1:
     fig = go.Figure()
 
-# Histogramme pour les prédictions
-fig.add_trace(go.Histogram(
-    x=avis['avis.label'],
-    name="Prédictions",
-    xbins=dict(start=1, end=5, size=0.5),
-    marker_color='blue',
-    opacity=0.7
-))
+    # Histogramme pour les prédictions
+    fig.add_trace(go.Histogram(
+        x=avis['avis.label'],
+        name="Prédictions",
+        xbins=dict(start=1, end=5, size=0.5),
+        marker_color='blue',
+        opacity=0.7
+    ))
 
-# Histogramme pour les notes utilisateurs
-fig.add_trace(go.Histogram(
-    x=avis['avis.note_restaurant'],
-    name="Notes Utilisateurs",
-    xbins=dict(start=1, end=5, size=0.5),
-    marker_color='orange',
-    opacity=0.7
-))
+    # Histogramme pour les notes utilisateurs
+    fig.add_trace(go.Histogram(
+        x=avis['avis.note_restaurant'],
+        name="Notes Utilisateurs",
+        xbins=dict(start=1, end=5, size=0.5),
+        marker_color='orange',
+        opacity=0.7
+    ))
 
-# Mise en forme
-fig.update_layout(
-    barmode='group',
-    xaxis_title="Notes (1 à 5)",
-    yaxis_title="Nombre d'Avis",
-    title="Distribution des Prédictions et des Notes Utilisateurs",
-    legend_title="Source",
-    template="plotly_white"
-)
+    # Mise en forme
+    fig.update_layout(
+        barmode='group',
+        xaxis_title="Notes (1 à 5)",
+        yaxis_title="Nombre d'Avis",
+        title="Distribution des Prédictions et des Notes Utilisateurs",
+        legend_title="Source",
+        template="plotly_white"
+    )
 
-st.plotly_chart(fig)
+    st.plotly_chart(fig)
 
 
 with tab2:
-
-    avis['ecart'] = avis['avis.label'] - avis['avis.note_restaurant']
-
-
-    fig = go.Figure()
+    fig_ecart = go.Figure()
 
     # Histogramme des écarts
-    fig.add_trace(go.Histogram(
-        x=avis['ecart'],
+    fig_ecart.add_trace(go.Histogram(
+        x=avis['avis.label'] - avis['avis.note_restaurant'],
         xbins=dict(start=-4, end=4, size=1),
         marker_color='purple',
         opacity=0.75
     ))
 
     # Mise en forme
-    fig.update_layout(
+    fig_ecart.update_layout(
         title="Distribution des Écarts (Prédictions - Notes Utilisateurs)",
         xaxis_title="Écart",
         yaxis_title="Nombre d'Avis",
         template="plotly_white"
     )
 
-    st.plotly_chart(fig)
+    st.plotly_chart(fig_ecart)
 
-    grouped = avis.groupby("avis.note_restaurant")["avis.label"].mean().reset_index()
-
-    st.write("### Moyenne des Prédictions par Note Utilisateur")
-
-    fig = go.Figure()
-
-    # Barres représentant les moyennes
-    fig.add_trace(go.Bar(
-        x=grouped['avis.note_restaurant'],
-        y=grouped['avis.label'],
-        marker_color='teal',
-        name="Moyenne des Prédictions"
-    ))
-
-    # Mise en forme
-    fig.update_layout(
-        title="Prédiction Moyenne par Note Utilisateur",
-        xaxis_title="Notes Utilisateurs",
-        yaxis_title="Prédiction Moyenne",
-        template="plotly_white"
-    )
-
-    st.plotly_chart(fig)
-
-
-
-
+    #grouped = avis.groupby("avis.note_restaurant")["avis.label"].mean().reset_index()
 
 
 # Afficher les avis du restaurant
