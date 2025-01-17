@@ -1,0 +1,10 @@
+/* Centrer le logo */
+.logo {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+}
+
+.logo img {
+    width: 150px;
+}
