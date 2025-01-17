@@ -11,8 +11,9 @@ from sqlutils import sqlutils
 from schemaDB import schemaDB
 import locale
 
-locale.setlocale(locale.LC_TIME, "French_France.1252")
 
+# Définir la locale pour les dates en français
+locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
 
 # Définir des headers réalistes pour éviter d'être bloqué
 headers = {
@@ -51,11 +52,8 @@ def extract_address(soup):
 
     return None
 
-    
-
 
 def scrape_restaurant_info(restaurant_url, db):
-
     id_restaurant = db.select("select max(id_restaurant)+1 from restaurants")
     id_restaurant = id_restaurant[1][0][0]
     try:
@@ -133,7 +131,7 @@ def scrape_restaurant_info(restaurant_url, db):
         return None
 
 
-def scrape_avis(restaurant_url, id_restaurant, db, max_pages = 5):
+def scrape_avis(restaurant_url, id_restaurant, db, max_pages=5):
     avis_list = []
     page_num = 0  # Numéro de page des avis
     success, avis_id = db.select("select max(id_avis)+1 from avis")
@@ -358,21 +356,21 @@ def process_pipeline(url, db):
 
     try:
         attempts = 0
-        max_attempts=10
-
+        max_attempts = 10
 
         while attempts < max_attempts:
             # Appeler la fonction de scraping
             restaurant_info = scrape_restaurant_info(url, db)
             # Vérifier si localisation est trouvée
-            if restaurant_info["total_comments"]!=0 and restaurant_info["localisation"]:
+            if (
+                restaurant_info["total_comments"] != 0
+                and restaurant_info["localisation"]
+            ):
                 print(f"Localisation trouvée après {attempts + 1} tentatives.")
                 break
-            
+
             print(f"Tentative {attempts + 1}: Localisation non trouvée. Retrying...")
             attempts += 1
-        
-
 
         if not restaurant_info:
             print(
@@ -457,7 +455,7 @@ def process_pipeline(url, db):
         print("Pipeline exécuté avec succès.")
     except Exception as e:
         print(f"Erreur lors de l'enregistrement dans la base de données : {e}")
- 
+
 
 # # execution du pipeline
 # if __name__ == "__main__":
