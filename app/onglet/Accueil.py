@@ -6,51 +6,58 @@ from function_app import get_db, transform_to_df_join, selected_tags_any, retrie
 db = get_db()
 
 # Utiliser des colonnes pour aligner l'image et le texte
-col1, col2,col3 = st.columns([1, 1, 4])
+col1, col2, col3 = st.columns([1, 2, 4])  # Redimensionner les colonnes pour mieux positionner le logo
+
 with col1:
-    st.write("")  
-    st.write("") 
-    st.write("") 
+    st.write("")  # Laisser un espace vide pour centrer le contenu
 
 with col2:
-    st.image("app/assets/logo.png", width=300)
+    st.image("assets/logo.png", width=150)  # Ajuster la taille du logo pour le rendre plus léger
 
 with col3:
-    st.write("")  # Ligne vide pour aligner le titre à l'image
-    st.write("")  
-    st.write("") 
-    st.write("")  
-    st.markdown("<h1 style='font-size: 60px;'>Bienvenue sur Friands !</h1>", unsafe_allow_html=True)
-    st.markdown("Avec ***<u>Friands</u>***, naviguer entre les différents restaurants Lyonnais et les comparez-les !", unsafe_allow_html=True)
+   
+    st.markdown("<h1 style='font-size: 40px; color: #3C6E47;'>Bienvenue sur <span style='font-weight: bold;'>Friands</span> !</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 18px; color: #6A9A7D;'>Avec <u><strong>Friands</strong></u>, explorez et comparez les meilleurs restaurants Lyonnais</p>", unsafe_allow_html=True)
+
+
+
 
 # Charger les données de la table restaurants et la table géograohie
 restaurants = transform_to_df_join(db, "SELECT * FROM restaurants, geographie WHERE restaurants.id_restaurant = geographie.id_restaurant;")
 
-# Affciher nombre de restaurants
+# Afficher le nombre de restaurants et de commentaires
 cols1, cols2 = st.columns([1, 1])
+
 with cols1:
     st.markdown(f"""
-        <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; text-align: center; width: 100%; margin: auto;">
-            <h2 style="color: #333;"><em>Friands</em> compare <span style="color: red;">{len(restaurants)}</span> restaurants 🍴</h2>
+        <div style="background: linear-gradient(to right, #b5e48c, #f0f9b2); padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
+            <h2 style="color: #333; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 22px;">
+                <em>Friands</em> compare <span style="color: #f09e3f;">{len(restaurants)}</span> restaurants 🍴
+            </h2>
         </div>
     """, unsafe_allow_html=True)
+
 with cols2:
     st.markdown(f"""
-        <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; text-align: center; width: 100%; margin: auto;">
-            <h2 style="color: #333;">Et analyse <span style="color: red;">{round(restaurants['restaurants.total_comments'].sum())}</span> commentaires</h2>
+        <div style="background: linear-gradient(to right, #ffd166, #f0f9b2); padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
+            <h2 style="color: #333; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 22px;">
+                Et analyse <span style="color: #f09e3f;">{round(restaurants['restaurants.total_comments'].sum())}</span> commentaires
+            </h2>
         </div>
     """, unsafe_allow_html=True)
 
 st.write("")
 st.write("")
 st.markdown("""
-    <h1 style="font-size: 25px;">Carte interactive des restaurants de Lyon</h1>
+    <h2 style="color: #3C6E47; font-size: 25px;">Carte interactive des restaurants de Lyon</h2>
 """, unsafe_allow_html=True)
 
 # Récupérer les tags des restaurants
 tags = retrieve_filter_list(restaurants['restaurants.tags'])
 
 clean_tags = tags_cleans(tags)
+
+
 
 cols3,cols4 = st.columns([1, 1])
 with cols3:
@@ -113,3 +120,25 @@ else :
         )
     st.plotly_chart(fig)
 
+#  design avec des couleurs gris-vert
+st.markdown("""
+    <style>
+        body {
+            background-color: #F0F4F1;  /* Fond gris clair */
+        }
+        .stButton>button {
+            background-color: #6A9A7D;  /* Boutons gris-vert */
+            color: white;
+        }
+        h1 {
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            color: #3C6E47;  /* Texte de titre gris-vert */
+        }
+        p {
+            font-family: 'Arial', sans-serif;
+            color: #333;  /* Texte descriptif gris-vert */
+        }
+        
+    </style>
+""", unsafe_allow_html=True)

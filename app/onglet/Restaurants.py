@@ -11,10 +11,21 @@ db = get_db()
 restaurants = transform_to_df_join(db, "SELECT * FROM restaurants, geographie WHERE restaurants.id_restaurant = geographie.id_restaurant;")
 
 # Ajouter un selectbox pour choisir un restaurant
+# Titre principal stylisé
 st.markdown("""
-    <h1 style="text-align: center;">🔍 Comparaison des restaurants 🔍</h1>
+    <h1 style="font-size: 40px; color: #3C6E47; text-align: center;">
+        🔍 <span style="font-weight: bold;">Comparaison des restaurants</span> 🔍
+    </h1>
 """, unsafe_allow_html=True)
-st.markdown("Dans cette page, vous pouvez obtenir plus d'informations sur les restaurants disponibles dans l'application !")
+
+# Texte d'introduction stylisé
+st.markdown("""
+    <p style="font-size: 18px; color: #333; text-align: center; line-height: 1.6;">
+        Avec <u><strong>Friands</strong></u>, découvrez plus d'informations sur les restaurants de notre application.<br>
+        Explorez les détails pour mieux choisir où savourer vos plats préférés ! 🍽️
+    </p>
+""", unsafe_allow_html=True)
+
 
 st.subheader("Sélectionnez un restaurant")
 selected_restaurant = st.selectbox("Choisissez un restaurant", restaurants["restaurants.nom"].unique(),label_visibility="collapsed" )
@@ -25,16 +36,32 @@ selected_data = restaurants[restaurants["restaurants.nom"] == selected_restauran
 col1, col2 = st.columns([1, 2])
 
 # Afficher les informations du restaurant sélectionné
+# Afficher les informations du restaurant sélectionné avec style
 with col1:
-    st.write(f"### {selected_restaurant}")
-    st.write(f"**Adresse** : {selected_data['geographie.localisation'].values[0]}")
-    st.write(f"**Type de Cuisine** : {selected_data['restaurants.tags'].values[0]}")
-    st.write(f"**Prix** : {selected_data['restaurants.price'].values[0]}")
-    st.write(f"**Note globale** : {selected_data['restaurants.note_globale'].values[0]}")
-    st.write(f"**Nombre d'avis** : {selected_data['restaurants.total_comments'].values[0]}")
-    st.write(f"**Nombre de transports à proximité** : {selected_data['geographie.transport_count'].values[0]}")
-    st.write(f"**Nombre de restaurants dans un rayon de 500 mètres** : {selected_data['geographie.restaurant_density'].values[0]}")
-    st.markdown(f"**Pour plus d'informations sur {selected_restaurant}** [cliquez ici]({selected_data['restaurants.url'].values[0]})")
+    st.markdown(f"""
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; 
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+            <h2 style="color: #3C6E47; font-family: Arial, sans-serif; text-align: center; font-size: 24px;">
+                {selected_restaurant}
+            </h2>
+            <p style="color: #333; font-size: 16px; font-family: Arial, sans-serif; line-height: 1.6;">
+                <strong style="color: #f09e3f; font-size: 14px;">Adresse :</strong> {selected_data['geographie.localisation'].values[0]}<br>
+                <strong style="color: #f09e3f; font-size: 14px;">Type de Cuisine :</strong> {selected_data['restaurants.tags'].values[0]}<br>
+                <strong style="color: #f09e3f; font-size: 14px;">Prix :</strong> {selected_data['restaurants.price'].values[0]}<br>
+                <strong style="color: #f09e3f; font-size: 14px;">Note globale :</strong> {selected_data['restaurants.note_globale'].values[0]} ⭐<br>
+                <strong style="color: #f09e3f; font-size: 14px;">Nombre d'avis :</strong> {selected_data['restaurants.total_comments'].values[0]}<br>
+                <strong style="color: #f09e3f; font-size: 14px;">Transports à proximité :</strong> {selected_data['geographie.transport_count'].values[0]} 🚇<br>
+                <strong style="color: #f09e3f; font-size: 14px;">Restaurants dans un rayon de 500m :</strong> {selected_data['geographie.restaurant_density'].values[0]} 🍴
+            </p>
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="{selected_data['restaurants.url'].values[0]}" target="_blank" 
+                   style="background: #3C6E47; color: #fff; padding: 10px 20px; 
+                          text-decoration: none; border-radius: 5px; font-size: 14px;">
+                    🌐 Plus d'informations
+                </a>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
 with col2: 
     latitude = selected_data['geographie.latitude'].values[0]

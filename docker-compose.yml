@@ -1,0 +1,14 @@
+version: '3.11'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app/data/friands.db:/app/data/friands.db
+    environment:
+      - STREAMLIT_SERVER_ADDRESS=192.168.1.29
+    command: ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
