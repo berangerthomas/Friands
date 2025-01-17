@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','src', 'utils')))
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','src', 'utils')))
 
 from sqlutils import sqlutils
 
