@@ -16,6 +16,8 @@
 
 Friands (Finding Restaurants, Insights And Notably Delectable Spots) is a restaurant analytics and recommendation engine. It leverages advanced Natural Language Processing and Machine Learning techniques to provide meaningful insights about dining establishments.
 
+![demo](.github/3D_vis.gif)
+
 ## Features
 
 - 🔍 Advanced restaurant search with multi-criteria filtering
