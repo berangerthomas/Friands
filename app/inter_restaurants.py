@@ -78,7 +78,7 @@ def plot_restaurant_similarities():
     if response.status_code == 200:
         mots_vides_github = response.text.splitlines()
     else:
-        print("Erreur lors de la récupération des mots vides depuis l'URL")
+        st.write("Erreur lors de la récupération des mots vides depuis l'URL")
 
     # Nettoyage des mots vides :
     #     - suppression des caractères diacritiques
@@ -93,7 +93,6 @@ def plot_restaurant_similarities():
 
     # Chargement du modèle français
     nlp = spacy.load("fr_core_news_sm")
-
     # Application de la fonction de lemmatisation sur le contenu des avis
     df[f"avis_lemmatized"] = df["avis_clean"].apply(
         lambda avis: lemmatize_text(avis, nlp)
@@ -175,4 +174,5 @@ def plot_restaurant_similarities():
     )
 
     fig.update_traces(textposition="top center")
-    fig.show()
+    st.plotly_chart(fig, use_container_width=True)
+
