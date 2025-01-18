@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from sqlutils import sqlutils
 import time
+import streamlit as st
 
 
 class MistralAPI:
@@ -80,6 +81,7 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
 
     # Convertir la date en YYYY-MM-DD
     date_min = date_min.strftime("%Y-%m-%d")
+    print(f"date_min : {date_min}")
 
     # Extraire tous les avis dont la date est supérieure à date_min
     success, t_avis = bdd.select(
@@ -100,11 +102,33 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
     """
     )
 
+
     if not success:
         return (
             False,
             f"Erreur lors de l'extraction des avis depuis la base de données : {t_avis}",
         )
+
+    # Si aucun avis n'est trouvé
+    if not t_avis or len(t_avis) == 0:
+        success, t_update_none = bdd.update(
+            table_name="restaurants",
+            data={"summary": "Trop peu d'avis ces 18 derniers mois pour générer un résumé fiable."},
+            where=[f"id_restaurant = {id_resto}"],
+        )
+        if not success:
+            bdd.rollback()
+            return (
+                False,
+                f"Erreur lors de l'insertion du message pour le restaurant {id_resto} : {t_update_none}",
+            )
+
+        else:
+            bdd.commit()
+            return (
+                True,
+                f"Message inséré pour le restaurant {id_resto} : {t_update_none}",
+            )
 
     # Insérer les champs extraits de la base de données dans un dataframe
     df = pd.DataFrame(
@@ -121,7 +145,7 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
             "label",
         ],
     )
-
+    print(df)
     # joindre tous les avis pour le restaurant
     df_grouped = (
         df.groupby("id_restaurant")
@@ -144,29 +168,31 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
     temperature = 0.1
 
     for index, row in df_grouped.iterrows():
+
         reviews = row["contenu_avis"]
+
         chunks = list(
             split_text(reviews, model_max_length)
         )  # Adjust the chunk size as needed
+
         summaries = []
+
         for chunk in chunks:
+
             summary = model_mistral.query(
                 f"{query} : '{chunk}'", temperature=temperature
             )
-            summaries.append(summary)
-        full_summary = " ".join(summaries)
 
-        # Si le résumé est None, on le remplace par un message
-        if not full_summary or full_summary == "None":
-            full_summary = (
-                "Trop peu d'avis ces 18 derniers mois pour générer un résumé fiable."
-            )
+            summaries.append(summary)
+
+        full_summary = " ".join(summaries)
 
         # Ajouter le résumé à df_grouped
         df_grouped.loc[index, "resume"] = full_summary
 
     # Updater les résumés dans la base de données
     for index, row in df_grouped.iterrows():
+
         success, t_insert = bdd.update(
             table_name="restaurants",
             data={"summary": row["resume"]},
@@ -174,14 +200,17 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
         )
 
         if not success:
+
             bdd.rollback()
             return (
                 False,
                 f"Erreur lors de l'insertion du résumé pour le restaurant {row['id_restaurant']} : {t_insert}",
             )
+
         else:
             bdd.commit()
             return (
                 True,
                 f"Résumé inséré pour le restaurant {row['id_restaurant']} ({t_insert})",
             )
+
