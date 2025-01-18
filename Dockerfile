@@ -33,4 +33,4 @@ COPY app/ /app
 EXPOSE 8501
 
 # Commande pour lancer l'application Streamlit
-CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=localhost"]
+CMD ["streamlit", "run", "app.py"]
