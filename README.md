@@ -89,7 +89,7 @@ Friands is using many differents technologies to perform its different tasks. He
 
 - Main programming language : [Python](https://www.python.org/)
 - Web interface : [Streamlit](https://streamlit.io/)
-- Containerisation : [Docker](https://www.docker.com/)
+- containerization : [Docker](https://www.docker.com/)
 - Graphs : [Plotly](https://plotly.com/python/)
 - Database : [SQLite](https://www.sqlite.org/)
 - Text summarization : [Mistral AI](https://mistral.ai)
