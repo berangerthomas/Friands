@@ -38,13 +38,17 @@ Make sure you have :
 1. Clone the repository:
 ```bash
 git clone https://github.com/berangerthomas/friands
+```
+
+2. Access the local root directory of the project:
+```
 cd friands
 ```
 
-2. Set up environment variable with your own [Mistral API Key](https://console.mistral.ai/) :
+3. Set up environment variable with your own [Mistral API Key](https://console.mistral.ai/) :
 ```bash
 cp .env.example .env
-# Edit .env file with your Mistral API key
+# Then edit .env file, and replace "Insert_your_key_here" with your Mistral API key
 ```
 
 ## Running the App
@@ -52,7 +56,7 @@ cp .env.example .env
 ### First Time Setup
 
 1. Start Docker Desktop
-2. Spin up services:
+2. Spin up services with the command:
 ```bash
 docker-compose up
 ```
@@ -68,6 +72,7 @@ docker-compose up --build
 
 ### Service Endpoints
 
+You can access the app through this link :
 - Web UI: [http://localhost:8501](http://localhost:8501)
 
 ### Shutdown
