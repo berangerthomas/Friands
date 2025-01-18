@@ -118,9 +118,9 @@ We welcome contributions! Here's how to get started:
 
 
 ## Authors
-- Souraya Ahmed Abderemane
-- Lucile Perbet
-- Béranger Thomas
+- [Souraya Ahmed Abderemane](https://github.com/Sahm269)
+- [Lucile Perbet](https://github.com/lucilecpp)
+- [Béranger Thomas](https://github.com/berangerthomas)
 
 ---
 
