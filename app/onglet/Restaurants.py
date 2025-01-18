@@ -345,38 +345,41 @@ with tab1:
     # Créer le graphique en ligne
     fig_sa = go.Figure()
 
-    fig_sa.add_trace(
-        go.Scatter(
-            x=sentiment_proportions.index,
-            y=sentiment_proportions["Positif"],
-            mode="lines+markers",
-            name="Positif",
-            line=dict(color="green"),
-            hovertemplate="<b>Année : </b> %{x}<br><b>Proportion Positif : </b> %{y:.2f}%<extra></extra>",
+    if positif > 0:
+        fig_sa.add_trace(
+            go.Scatter(
+                x=sentiment_proportions.index,
+                y=sentiment_proportions["Positif"],
+                mode="lines+markers",
+                name="Positif",
+                line=dict(color="green"),
+                hovertemplate="<b>Année : </b> %{x}<br><b>Proportion Positif : </b> %{y:.2f}%<extra></extra>",
+            )
         )
-    )
 
-    fig_sa.add_trace(
-        go.Scatter(
-            x=sentiment_proportions.index,
-            y=sentiment_proportions["Neutre"],
-            mode="lines+markers",
-            name="Neutre",
-            line=dict(color="orange"),
-            hovertemplate="<b>Année : </b> %{x}<br><b>Proportion Neutre : </b> %{y:.2f}%<extra></extra>",
+    if neutre > 0:
+        fig_sa.add_trace(
+            go.Scatter(
+                x=sentiment_proportions.index,
+                y=sentiment_proportions["Neutre"],
+                mode="lines+markers",
+                name="Neutre",
+                line=dict(color="orange"),
+                hovertemplate="<b>Année : </b> %{x}<br><b>Proportion Neutre : </b> %{y:.2f}%<extra></extra>",
+            )
         )
-    )
 
-    fig_sa.add_trace(
-        go.Scatter(
-            x=sentiment_proportions.index,
-            y=sentiment_proportions["Négatif"],
-            mode="lines+markers",
-            name="Négatif",
-            line=dict(color="red"),
-            hovertemplate="<b>Année : </b> %{x}<br><b>Proportion Négatif : </b> %{y:.2f}%<extra></extra>",
+    if negatif >0:
+           fig_sa.add_trace(
+            go.Scatter(
+                x=sentiment_proportions.index,
+                y=sentiment_proportions["Négatif"],
+                mode="lines+markers",
+                name="Négatif",
+                line=dict(color="red"),
+                hovertemplate="<b>Année : </b> %{x}<br><b>Proportion Négatif : </b> %{y:.2f}%<extra></extra>",
+            )
         )
-    )
 
     # Ajouter des titres et des labels
     fig_sa.update_layout(
