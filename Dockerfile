@@ -20,6 +20,10 @@ COPY requirements.txt .
 # Installer les dépendances
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Télécharger le modèle de langue française de spaCy
+RUN python -m spacy download fr_core_news_sm
+
+
 # Copier tout le dossier app/ dans le conteneur
 COPY app/ /app
 
