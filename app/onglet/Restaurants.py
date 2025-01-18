@@ -2,10 +2,8 @@ import streamlit as st
 from function_app import get_db, transform_to_df_join, generate_circle, retrieve_year
 import plotly.graph_objects as go
 import pandas as pd
-import os
-import sys
 
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..','..')))
+
 
 # Chargement de la base de données
 db = get_db()
@@ -33,7 +31,7 @@ st.markdown("""
     </p>
 """, unsafe_allow_html=True)
 
-
+################################################## Informations Restaurants ##################################################
 st.subheader("Sélectionnez un restaurant")
 selected_restaurant = st.selectbox("Choisissez un restaurant", restaurants["restaurants.nom"].unique(),label_visibility="collapsed" )
 
@@ -58,7 +56,7 @@ with col1:
                 <strong style="color: #f09e3f; font-size: 14px;">Note globale :</strong> {selected_data['restaurants.note_globale'].values[0]} ⭐<br>
                 <strong style="color: #f09e3f; font-size: 14px;">Nombre d'avis :</strong> {avis['avis.contenu_avis'].count()}<br>
                 <strong style="color: #f09e3f; font-size: 14px;">Transports dans un rayon de 500 mètres :</strong> {selected_data['geographie.transport_count'].values[0]} 🚇<br>
-                <strong style="color: #f09e3f; font-size: 14px;">Restaurants dans un rayon de 500m :</strong> {selected_data['geographie.restaurant_density'].values[0]} 🍴
+                <strong style="color: #f09e3f; font-size: 14px;">Restaurants dans un rayon de 500 mètres :</strong> {selected_data['geographie.restaurant_density'].values[0]} 🍴
             </p>
             <div style="text-align: center; margin-top: 10px;">
                 <a href="{selected_data['restaurants.url'].values[0]}" target="_blank" 
@@ -98,7 +96,7 @@ with col2:
             <br>Adresse: {selected_data['geographie.localisation'].values[0]}
             <br>Nombre de restaurants à proximité : {selected_data['geographie.restaurant_density'].values[0]}
             <br>Nombre de transports à proximité : {selected_data['geographie.transport_count'].values[0]}"""),
-        name="Restaurant"    
+        name="Restaurant"   
     ))
 
 
@@ -116,36 +114,52 @@ with col2:
         )
     )
 
-    # Afficher avec Streamlit
     st.plotly_chart(fig)
-st.write("")
-st.write("")
-st.write("")
-col6, col7, col8 = st.columns([3,1,3])
-with col6:
-    st.subheader("Résumé des avis clients du restaurant")
-    st.markdown(
-        f"""
-        <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
-            {selected_data['restaurants.summary'].values[0]}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+################################################## Résumé et WordCloud ##################################################
 
-with col7:
-    st.write("")
+# st.write("")
+# st.write("")
+# st.write("")
+# col6, col7, col8 = st.columns([3,1,3])
+# with col6:
+#     st.subheader("Résumé des avis clients du restaurant")
+#     st.markdown(
+#         f"""
+#         <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
+#             {selected_data['restaurants.summary'].values[0]}
+#         </div>
+#         """,
+#         unsafe_allow_html=True
+#     )
+
+# with col7:
+#     st.write("")
     
-with col8:
-    selected_id = selected_data['restaurants.id_restaurant'].values[0]
-    st.image(f"assets/wordcloud_{selected_id}.png", width=600)
-
-
-
+# with col8:
+#     selected_id = selected_data['restaurants.id_restaurant'].values[0]
+#     st.image(f"assets/wordcloud_{selected_id}.png", width=600, caption="Nuage de mots pour le restaurant sélectionné")
+st.subheader(f"Résumé des avis clients de {selected_restaurant}")
+st.markdown(
+    f"""
+    <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
+        {selected_data['restaurants.summary'].values[0]}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.write("")
 st.write("")
 st.write("")
+
+selected_id = selected_data['restaurants.id_restaurant'].values[0]
+st.image(f"assets/wordcloud_{selected_id}.png", width=600, caption="Nuage de mots pour le restaurant sélectionné")
+
+st.write("")
+st.write("")
+st.write("")
+
+################################################## Temporalité des notes ##################################################
 
 st.subheader("Analyse temporelle des notes globales")
 
@@ -165,8 +179,10 @@ with tab1:
         x=moyenne_par_an['année'],
         y=moyenne_par_an['avis.note_restaurant'],
         mode='lines+markers',
-        name=f'Note globale moyenne par an pour {selected_restaurant}',
-        line=dict(color='green')
+        name=f'Note moyenne par an pour {selected_restaurant}',
+        line=dict(color='green'),
+        hovertemplate="<b>Année : </b> %{x}<br><b>Note moyenne : </b> %{y:.2f}<extra></extra>"
+
     ))
 
     # Mettre à jour les labels et le titre
@@ -199,8 +215,10 @@ with tab2:
         x=moyenne_par_mois['mois_nom'],
         y=moyenne_par_mois['avis.note_restaurant'],
         mode='lines+markers',
-        name=f'Note globale moyenne par mois pour {selected_year}',
-        line=dict(color='green')
+        name=f'Note moyenne par mois pour {selected_year}',
+        line=dict(color='green'),
+        hovertemplate="<b>Mois : </b> %{x}<br><b>Note moyenne : </b> %{y:.2f}<extra></extra>"
+
     ))
 
     # Mettre à jour les labels et le titre
@@ -210,31 +228,113 @@ with tab2:
         yaxis_title=f'Note globale moyenne pour l\'année {selected_year}'
     )
     st.plotly_chart(fig_mois)
-tab1, tab2 = st.tabs(["Distributions", "Analyse des écarts"])
+
+################################################## Analyse de sentiment ##################################################
+st.subheader("Analyse de sentiment des avis clients")
+tab1, tab2 = st.tabs(["Analyse de sentiment", "Distribution des notes de sentiment"])
 
 with tab1:
-    fig = go.Figure()
+    # Recodage variable avis.label 5 et 4 => positif, 3 => neutre, 2 et 1 => négatif
+    avis['avis.label_sentiment'] = avis['avis.label'].replace({5 : "Positif", 4: "Positif", 3: "Neutre", 2: "Négatif", 1: "Négatif"})
+    
+    # Calcul des proportions de chaque sentiment
+    total_avis = len(avis)
+    positif = avis['avis.label_sentiment'].value_counts().get('Positif', 0) / total_avis * 100
+    neutre = avis['avis.label_sentiment'].value_counts().get('Neutre', 0) / total_avis * 100
+    negatif = avis['avis.label_sentiment'].value_counts().get('Négatif', 0) / total_avis * 100
+
+
+    # Afficher les proportions de chaque sentiment
+    col9, col10, col11 = st.columns(3)
+    
+    markdown_style = """
+        <div style='
+            border: 2px solid grey;
+            border-radius: 10px;
+            background-color: white;
+            padding: 10px;
+            text-align: center;
+            color: {};
+        '>
+            <h3 style='margin: 0;'>{}</h3>
+        </div>
+    """
+    
+    with col9:
+        st.markdown(markdown_style.format("green", f"Proportion de positif : {positif:.2f}%"), unsafe_allow_html=True)
+    with col10:
+        st.markdown(markdown_style.format("orange", f"Proportion de neutre : {neutre:.2f}%"), unsafe_allow_html=True)
+    with col11:
+        st.markdown(markdown_style.format("red", f"Proportion de négatif : {negatif:.2f}%"), unsafe_allow_html=True)
+
+    # Calculer les proportions de chaque sentiment par année
+    sentiment_counts = avis.groupby(['année', 'avis.label_sentiment']).size().unstack(fill_value=0)
+    sentiment_proportions = sentiment_counts.div(sentiment_counts.sum(axis=1), axis=0) * 100
+
+    # Créer le graphique en ligne
+    fig_sa = go.Figure()
+
+    fig_sa.add_trace(go.Scatter(
+        x=sentiment_proportions.index, 
+        y=sentiment_proportions['Positif'], 
+        mode='lines+markers', 
+        name='Positif', 
+        line=dict(color='green'),
+        hovertemplate="<b>Année : </b> %{x}<br><b>Proportion Positif : </b> %{y:.2f}%<extra></extra>"
+))
+    
+    fig_sa.add_trace(go.Scatter(
+        x=sentiment_proportions.index, 
+        y=sentiment_proportions['Neutre'], 
+        mode='lines+markers', 
+        name='Neutre', 
+        line=dict(color='orange'),    
+        hovertemplate="<b>Année : </b> %{x}<br><b>Proportion Neutre : </b> %{y:.2f}%<extra></extra>"
+))
+    
+    fig_sa.add_trace(go.Scatter(
+        x=sentiment_proportions.index, 
+        y=sentiment_proportions['Négatif'], 
+        mode='lines+markers', 
+        name='Négatif', 
+        line=dict(color='red'),
+        hovertemplate="<b>Année : </b> %{x}<br><b>Proportion Négatif : </b> %{y:.2f}%<extra></extra>"
+))
+
+    # Ajouter des titres et des labels
+    fig_sa.update_layout(
+        title='Évolution de la proportion de sentiments au fil des années',
+        xaxis_title='Année',
+        yaxis_title='Proportion (%)',
+        legend_title='Sentiment'
+    )
+
+    st.plotly_chart(fig_sa)
+    
+with tab2:
+    st.markdown("""La note de sentiment est une note attribuée par un modèle à chaque avis. Elle est comprise entre 1 et 5, 1 étant très négatif et 5 très positif. <br>
+                Sur ce graphique, la note calculée par le modèle et la note réelle du client sont comparées
+                """, unsafe_allow_html=True)
+    fig_distribution = go.Figure()
 
     # Histogramme pour les prédictions
-    fig.add_trace(go.Histogram(
+    fig_distribution.add_trace(go.Histogram(
         x=avis['avis.label'],
         name="Prédictions",
-        xbins=dict(start=1, end=5, size=0.5),
         marker_color='blue',
         opacity=0.7
     ))
 
-    # Histogramme pour les notes utilisateurs
-    fig.add_trace(go.Histogram(
+    #Histogramme pour les notes utilisateurs
+    fig_distribution.add_trace(go.Histogram(
         x=avis['avis.note_restaurant'],
         name="Notes Utilisateurs",
-        xbins=dict(start=1, end=5, size=0.5),
         marker_color='orange',
         opacity=0.7
     ))
 
     # Mise en forme
-    fig.update_layout(
+    fig_distribution.update_layout(
         barmode='group',
         xaxis_title="Notes (1 à 5)",
         yaxis_title="Nombre d'Avis",
@@ -242,34 +342,19 @@ with tab1:
         legend_title="Source",
         template="plotly_white"
     )
-
-    st.plotly_chart(fig)
-
-
-with tab2:
-    fig_ecart = go.Figure()
-
-    # Histogramme des écarts
-    fig_ecart.add_trace(go.Histogram(
-        x=avis['avis.label'] - avis['avis.note_restaurant'],
-        xbins=dict(start=-4, end=4, size=1),
-        marker_color='purple',
-        opacity=0.75
-    ))
-
-    # Mise en forme
-    fig_ecart.update_layout(
-        title="Distribution des Écarts (Prédictions - Notes Utilisateurs)",
-        xaxis_title="Écart",
-        yaxis_title="Nombre d'Avis",
-        template="plotly_white"
+    fig_distribution.data[1].update(
+    hovertemplate="<b>Source : </b> Prédiction<br><b>Note : </b> %{x}<br><b>Nombre d'Avis:</b> %{y}<extra></extra>"
     )
 
-    st.plotly_chart(fig_ecart)
+    # Supposons que vous avez deux traces, une pour les utilisateurs et une pour les prédictions
+    fig_distribution.data[0].update(
+        hovertemplate="<b>Source : </b> Utilisateur<br><b>Note : </b> %{x}<br><b>Nombre d'Avis:</b> %{y}<extra></extra>"
+    )
 
-    #grouped = avis.groupby("avis.note_restaurant")["avis.label"].mean().reset_index()
 
+    st.plotly_chart(fig_distribution)
 
+################################################## AVIS ##################################################
 # Afficher les avis du restaurant
 st.write("### Avis des clients")
 
@@ -285,14 +370,14 @@ if button_avis:
 if st.session_state["show_avis"]:
     avis.drop(columns="année", axis=1, inplace=True)
     avis = avis.sort_values(by="avis.date_avis", ascending=False)
-    avis.columns = ["Date de l'avis", "Titre de l'avis", "Contenu de l'avis", "Note du restaurant", "Note Label"]
+    avis.columns = ["Date de l'avis", "Titre de l'avis", "Contenu de l'avis", "Note du restaurant", "Note Label", "Sentiment"]
     st.session_state["avis"] = avis
 
     avis = st.session_state["avis"]
     min_date = avis["Date de l'avis"].min().date()
     max_date = avis["Date de l'avis"].max().date()
     
-    col3, col4, col5 = st.columns([1, 1, 1])
+    col3, col4, col5, col12 = st.columns([1, 1, 1, 1])
     with col3:
         debut_date = st.date_input("Choissiez votre date de début", min_date,label_visibility="visible")
     
@@ -301,31 +386,80 @@ if st.session_state["show_avis"]:
 
     with col5:
         unique_notes = avis["Note du restaurant"].unique()
-        selected_notes = st.multiselect("Sélectionnez la ou les notes qui vous intéressent", unique_notes)
+        unique_notes = sorted([int(note) for note in unique_notes])
+        selected_notes = st.multiselect("Sélectionnez les notes qui vous intéressent ⭐", unique_notes)
+    
+    with col12:
+        unique_sentiments = avis["Sentiment"].unique()
+        selected_sentiments = st.multiselect("Sélectionnez les sentiments qui vous intéressent", unique_sentiments)
 
     debut_date = pd.to_datetime(debut_date)
     fin_date = pd.to_datetime(fin_date)
 
+    search_text = st.text_input("Recherchez un mot clé parmis tous les avis")
+
+
+    # # Filtrage des avis
+    # if selected_notes and selected_sentiments:
+    #     # Appliquer le filtre de notes et de sentiments uniquement si des notes et des sentiments sont sélectionnés
+    #     filtered_avis = avis[
+    #         (avis["Date de l'avis"] >= debut_date)
+    #         & (avis["Date de l'avis"] <= fin_date)
+    #         & (avis["Note du restaurant"].isin(selected_notes))
+    #         & (avis["Sentiment"].isin(selected_sentiments))
+    #     ].copy()
+    # elif selected_notes:
+    #     # Appliquer le filtre de notes uniquement si des notes sont sélectionnées
+    #     filtered_avis = avis[
+    #         (avis["Date de l'avis"] >= debut_date)
+    #         & (avis["Date de l'avis"] <= fin_date)
+    #         & (avis["Note du restaurant"].isin(selected_notes))
+    #     ].copy()
+    # elif selected_sentiments:
+    #     # Appliquer le filtre de sentiments uniquement si des sentiments sont sélectionnés
+    #     filtered_avis = avis[
+    #         (avis["Date de l'avis"] >= debut_date)
+    #         & (avis["Date de l'avis"] <= fin_date)
+    #         & (avis["Sentiment"].isin(selected_sentiments))
+    #     ].copy()
+    # else:
+    #     # Ne pas appliquer de filtre sur les notes ou les sentiments si aucun n'est sélectionné
+    #     filtered_avis = avis[
+    #         (avis["Date de l'avis"] >= debut_date) & (avis["Date de l'avis"] <= fin_date)
+    #     ].copy()
+
     # Filtrage des avis
+    filtered_avis = avis[
+        (avis["Date de l'avis"] >= debut_date) & 
+        (avis["Date de l'avis"] <= fin_date)
+    ]
+
     if selected_notes:
-        # Appliquer le filtre de notes uniquement si des notes sont sélectionnées
-        filtered_avis = avis[
-            (avis["Date de l'avis"] >= debut_date)
-            & (avis["Date de l'avis"] <= fin_date)
-            & (avis["Note du restaurant"].isin(selected_notes))
-        ].copy()
-    else:
-        # Ne pas appliquer de filtre sur les notes si aucune note n'est sélectionnée
-        filtered_avis = avis[
-            (avis["Date de l'avis"] >= debut_date) & (avis["Date de l'avis"] <= fin_date)
-        ].copy()
+        filtered_avis = filtered_avis[filtered_avis["Note du restaurant"].isin(selected_notes)]
+    
+    if selected_sentiments:
+        filtered_avis = filtered_avis[filtered_avis["Sentiment"].isin(selected_sentiments)]
+    
+    if search_text:
+        filtered_avis = filtered_avis[filtered_avis["Contenu de l'avis"].str.contains(search_text, case=False, na=False)]
+
     # Formater les dates pour l'affichage
-    filtered_avis["Date de l'avis"] = filtered_avis["Date de l'avis"].astype(str)
-    filtered_avis["Date de l'avis"] = pd.to_datetime(filtered_avis["Date de l'avis"]).dt.strftime('%Y/%m/%d')
+    filtered_avis.loc[: ,"Date de l'avis"] = pd.to_datetime(filtered_avis["Date de l'avis"]).dt.strftime('%Y/%m/%d')
     filtered_avis.reset_index(drop=True, inplace=True)
 
     # Sauvegarder dans la session
     st.session_state["filtered_avis"] = filtered_avis
 
-    # Afficher les datas filtrées
-    st.dataframe(filtered_avis, use_container_width=True)
+    # Afficher les avis filtrés de manière améliorée
+    for index, row in filtered_avis.iterrows():
+        date_avis = row["Date de l'avis"]
+        note = int(row["Note du restaurant"])
+        avis = row["Contenu de l'avis"]
+        sentiment = row["Sentiment"]
+        titre = row["Titre de l'avis"]
+
+        stars = '⭐' * note
+
+        with st.expander(f"Avis du {date_avis} - Note : {stars} - Sentiment : {sentiment}", expanded=True):
+            st.markdown(f"**Titre:** {titre}")
+            st.markdown(f"**Avis:** {avis}")

@@ -12,8 +12,6 @@ from generate_wordcloud import *
 db = get_db()
 
 # Récupérer les URLs des restaurants existants
-print(db.select("SELECT nom FROM restaurants"))
-
 query = transform_to_df("restaurants",db,"SELECT url FROM restaurants;")
 existing_urls = query['url'].tolist()
 

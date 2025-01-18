@@ -14,7 +14,8 @@ restaurants = transform_to_df_join(db, """SELECT *
 clients = transform_to_df_join(db, """SELECT avis.nom_utilisateur, 
                                restaurants.nom, 
                                avis.date_avis,
-                               avis.note_restaurant, 
+                               avis.note_restaurant,
+                               avis.label, 
                                restaurants.tags,
                                restaurants.price
                                FROM restaurants, avis 
@@ -23,11 +24,11 @@ clients = transform_to_df_join(db, """SELECT avis.nom_utilisateur,
 
 st.markdown("""
     <h1 style="text-align: center; font-size: 40px; font-family: 'Arial', sans-serif; color: #3C6E47; 
-              font-weight: bold;"> Comparaison des restaurants sur différents aspects </h1>
+              font-weight: bold;"> 📊 Comparaison des restaurants sur différents aspects 📊</h1>
 """, unsafe_allow_html=True)
 
 # Afficher les aspects des restaurants
-cols1, cols2, cols3 = st.columns([1, 1, 1])
+cols1, cols2, cols3, cols4 = st.columns([1, 1, 1, 1])
 
 with cols1:
     st.markdown("""
@@ -55,6 +56,14 @@ with cols3:
             </h3>
         </div>
     """, unsafe_allow_html=True)
+with cols4:
+    st.markdown("""
+        <div style="background:linear-gradient(to right, #ffd166, #f0f9b2);; padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
+            <h3 style="color: #fff; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 18px;">
+                 📈 L'analyse des sentiments
+            </h3>
+        </div>
+    """, unsafe_allow_html=True)
 
 # Petit texte introductif sous les blocs
 st.markdown("""
@@ -67,14 +76,17 @@ st.markdown("""
 
 
 
+
 # Récupérer les tags et les prix des restaurants
 resto_tags = retrieve_filter_list(restaurants['restaurants.tags'])
 resto_prices=retrieve_filter_list(restaurants['restaurants.price'])
 
 # Affichage des filtres
+st.sidebar.markdown("### 🎛️ Filtres")
 clients_tags = st.sidebar.multiselect("Sélectionnez les types de cuisines", resto_tags)
 clients_prices = st.sidebar.multiselect("Choisissez vos fourchettes de prix", resto_prices) 
 
+#################################### Gestion des filtres ###################################
 # Filtre en fonction des sélections
 if clients_tags and clients_prices:
     filtered_restaurants = restaurants[
@@ -86,19 +98,26 @@ if clients_tags and clients_prices:
         (clients["restaurants.price"].isin(clients_prices)) & 
         (clients["restaurants.tags"].apply(lambda x: selected_tags_any(x, clients_tags)))
     ]
-elif clients_tags:  # Si seulement des tags ont été sélectionnés
+# Si seulement des tags ont été sélectionnés
+elif clients_tags:  
     filtered_restaurants = restaurants[restaurants["restaurants.tags"].apply(lambda x: selected_tags_any(x, clients_tags))]
     filtered_clients = clients[clients["restaurants.tags"].apply(lambda x: selected_tags_any(x, clients_tags))]
-elif clients_prices:  # Si seulement des prix ont été sélectionnés
+
+# Si seulement des prix ont été sélectionnés
+elif clients_prices:  
     filtered_restaurants = restaurants[restaurants["restaurants.price"].isin(clients_prices)]
     filtered_clients = clients[clients["restaurants.price"].isin(clients_prices)]
-else:  # Si aucun filtre n'est sélectionné, afficher toutes les données
+
+# Si aucun filtre n'est sélectionné, afficher toutes les données
+else:  
     filtered_restaurants = restaurants
     filtered_clients = clients
 
 # Afficher un message si aucun résultat n'est trouvé
 if filtered_restaurants.empty or filtered_clients.empty:
-    st.warning("Aucun restaurant ou client ne correspond aux filtres sélectionnés.")
+    st.warning("Aucun restaurant ne correspond aux filtres sélectionnés.")
+
+#################################### Note Globale ###################################
 
 st.subheader("⭐Note globale⭐")
 
@@ -113,7 +132,8 @@ with tab1:
         y="restaurants.note_globale",
         title="Comparaison des notes globales",
         color="restaurants.nom",
-        labels={"restaurants.note_globale": "⭐Note Globale", "restaurants.nom": "Nom du restaurant"},
+        labels={"restaurants.note_globale": "⭐Note Globale", 
+        "restaurants.nom": "Nom du restaurant"},
     )
 
     # Ajouter une ligne pour le prix moyen de la ville
@@ -124,6 +144,7 @@ with tab1:
     fig3.update_xaxes(tickangle=315)
 
     st.plotly_chart(fig3)
+
 with tab2:
     fig5 = px.box(
         filtered_clients,
@@ -136,6 +157,7 @@ with tab2:
     fig5.update_xaxes(tickangle=315)
 
     st.plotly_chart(fig5)
+#################################### Nombre d'utilisateurs ###################################
 
 st.subheader("🔢 Nombre d'utilisateurs 🔢")
 
@@ -148,24 +170,71 @@ fig4 = px.line(nombre_clients_an, x='année',
             color='restaurants.nom',
             title=f"Nombre d'utilisateurs au fil des ans",
             markers=True,
-            labels={"avis.nom_utilisateur": "Nombre d'utilisateurs", 
-                    "restaurants.nom": "Nom du restaurant"})
+            labels={"avis.nom_utilisateur" : "Nombre d'utilisateurs", 
+                    "restaurants.nom" : "Nom du restaurant"})
 st.plotly_chart(fig4)
+
+#################################### Sentiment Analysis ###################################
+st.subheader("📈 Analyse des sentiments 📉")
+# Recoder les sentiments
+filtered_clients.loc[: ,'avis.label_sentiment']= filtered_clients['avis.label'].replace({5: "Positif", 4: "Positif", 3: "Neutre", 2: "Négatif", 1: "Négatif"}).copy()
+
+# Calculer les proportions de chaque sentiment pour chaque restaurant
+sentiment_counts = filtered_clients.groupby(['restaurants.nom', 'avis.label_sentiment']).size().reset_index(name='counts')
+sentiment_totals = filtered_clients.groupby('restaurants.nom').size().reset_index(name='total_counts')
+sentiment_counts = sentiment_counts.merge(sentiment_totals, on='restaurants.nom')
+sentiment_counts['proportion'] = sentiment_counts['counts'] / sentiment_counts['total_counts'] * 100
+import pandas as pd
+# Assurer l'ordre des sentiments : Positif, Neutre, Négatif
+sentiment_counts['avis.label_sentiment'] = pd.Categorical(
+    sentiment_counts['avis.label_sentiment'], 
+    categories=["Positif", "Neutre", "Négatif"], 
+    ordered=True
+)
+sentiment_counts = sentiment_counts.sort_values(by=['restaurants.nom', 'avis.label_sentiment'])
+
+# Créer le graphique en barres
+fig_sentiments = px.bar(
+    sentiment_counts,
+    x='restaurants.nom',
+    y='proportion',
+    color='avis.label_sentiment',
+    labels={
+        'restaurants.nom': 'Nom du restaurant', 
+        'proportion': 'Proportion', 
+        'avis.label_sentiment': 'Sentiment'
+    },
+    title='Proportion des sentiments pour chaque restaurant',
+    color_discrete_map={
+        'Positif': 'rgba(0, 128, 0, 0.6)',  
+        'Neutre': 'rgba(255, 165, 0, 0.6)', 
+        'Négatif': 'rgba(255, 0, 0, 0.6)' 
+    }
+)
+
+# Afficher le graphique
+st.plotly_chart(fig_sentiments)
+
+#################################### Classement ###################################
 
 st.subheader("🏆Classement des restaurants🏆")
 
-selected_notes = st.multiselect("Choisissez votre classement", sorted(filtered_clients["avis.note_restaurant"].unique(), reverse=True))
-
+# Sélectionner les notes à afficher
+selected_notes = st.multiselect("Choisissez vos notes pour classer les restaurants", sorted([int(note) for note in filtered_clients["avis.note_restaurant"].unique()], reverse=True))
 if selected_notes:
     filtered_clients = filtered_clients[filtered_clients["avis.note_restaurant"].isin(selected_notes)]
 
+# Calculer le nombre de notes par restaurant
 restaurant_counts = filtered_clients.groupby("restaurants.nom")["avis.note_restaurant"].count().reset_index()
 restaurant_counts.columns = ["Nom", "Nombre de notes"]
 restaurant_counts["Rang"] = restaurant_counts["Nombre de notes"].rank(ascending=False)
 restaurant_counts = restaurant_counts.sort_values(by="Rang").reset_index(drop=True)
 
+# Afficher le top 3 des restaurants
 col1, col2, col3 = st.columns([2, 1, 2])
+
 with col1:
+    # Sélection du Top 3
     top_3_restaurants = restaurant_counts.head(3).reindex([1, 0, 2]).reset_index(drop=True)
     colors = ['silver', 'gold', '#cd7f32']
 
@@ -173,7 +242,9 @@ with col1:
         go.Bar(
             x=top_3_restaurants["Nom"],
             y=top_3_restaurants["Nombre de notes"],
-            marker=dict(color=colors[:len(top_3_restaurants)])
+            marker=dict(color=colors[:len(top_3_restaurants)]),
+            hovertemplate='<b>Restaurant :</b> %{x}<br><b>Nombre de notes :</b> %{y}<extra></extra>'
+
         )
     ])
 
@@ -189,6 +260,7 @@ with col1:
     if st.button("Voir le classement complet"):
         with col2:
             st.write('')
+
         with col3:
             st.write('')
             st.write('')
