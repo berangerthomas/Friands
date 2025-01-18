@@ -27,10 +27,11 @@ Friands (Finding Restaurants, Insights And Notably Delectable Spots) is a restau
 
 ## Requirements
 
-- [Docker Desktop](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-- 10GB available disk space
-- Stable internet connection
+Make sure you have :
+- [Docker Desktop](https://docs.docker.com/get-docker/) installed and running,
+- [Docker Compose](https://docs.docker.com/compose/install/) installed and executable
+- 10GB available disk space to download ML models,
+- and a stable internet connection.
 
 ## Getting Started
 
