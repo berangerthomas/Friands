@@ -105,9 +105,6 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
             False,
             f"Erreur lors de l'extraction des avis depuis la base de données : {t_avis}",
         )
-    else:
-        if len(t_avis) == 0:
-            return False, "Aucun avis à analyser."
 
     # Insérer les champs extraits de la base de données dans un dataframe
     df = pd.DataFrame(
@@ -143,7 +140,7 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
     # Instanciation de la classe MistralAPI
     model_mistral = MistralAPI(model=model)
 
-    query = "Analyser ces avis de clients concernant un restaurant, puis produire un unique résumé de ces avis, court mais riche d'informations. Ne pas produire de liste de points positifs ou négatifs, ni ."
+    query = "Analyser ces avis de clients concernant un restaurant, puis produire un unique résumé de ces avis, court mais riche d'informations. Ne pas produire de liste de points positifs ou négatifs."
     temperature = 0.1
 
     for index, row in df_grouped.iterrows():
@@ -158,6 +155,12 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
             )
             summaries.append(summary)
         full_summary = " ".join(summaries)
+
+        # Si le résumé est None, on le remplace par un message
+        if not full_summary or full_summary == "None":
+            full_summary = (
+                "Trop peu d'avis ces 18 derniers mois pour générer un résumé fiable."
+            )
 
         # Ajouter le résumé à df_grouped
         df_grouped.loc[index, "resume"] = full_summary
