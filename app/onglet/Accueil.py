@@ -1,22 +1,23 @@
 import streamlit as st
 import plotly.graph_objects as go
-from function_app import get_db, transform_to_df_join,selected_tags_any, retrieve_filter_list, tags_cleans
+from function_app import get_db, transform_to_df_join,selected_tags_any, retrieve_filter_list
 
 # Chargement de la base de données
 db = get_db()
 
 # Utiliser des colonnes pour aligner l'image et le texte
-col1, col2, col3 = st.columns([1, 2, 4])  # Redimensionner les colonnes pour mieux positionner le logo
+col1, col2, col3 = st.columns([1, 2, 4]) 
 
 with col1:
     st.write("")  # Laisser un espace vide pour centrer le contenu
 
 with col2:
-    st.image("assets/logo.png", width=150)  # Ajuster la taille du logo pour le rendre plus léger
+    st.image("assets/logo.png", width=150) 
 
 with col3:
    
     st.markdown("<h1 style='font-size: 40px; color: #3C6E47;'>Bienvenue sur <span style='font-weight: bold;'>Friands</span> !</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 18px; color: #6A9A7D;'>Finding Restaurants, Insights And Notably Delectable Spots</p>", unsafe_allow_html=True)
     st.markdown("<p style='font-size: 18px; color: #6A9A7D;'>Avec <u><strong>Friands</strong></u>, explorez et comparez les meilleurs restaurants Lyonnais</p>", unsafe_allow_html=True)
 
 
