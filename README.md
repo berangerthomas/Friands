@@ -5,7 +5,6 @@
 - [Overview](#overview)
 - [Features](#features)
 - [Requirements](#requirements)
-- [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Running the App](#running-the-app)
 - [Behind the scene technologies](#behind-the-scene-technologies)
@@ -32,14 +31,6 @@ Friands (Finding Restaurants, Insights And Notably Delectable Spots) is a restau
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - 10GB available disk space
 - Stable internet connection
-
-## Installation
-
-To clone this project, run the following command in your terminal :
-
-```bash
-git clone https://github.com/berangerthomas/friands
-```
 
 ## Getting Started
 
