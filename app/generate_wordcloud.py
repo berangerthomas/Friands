@@ -91,10 +91,6 @@ def generate_wordcloud(id_restaurant):
     db_path = Path("data/friands.db")
     bdd = sqlutils(db_path)
 
-    # bdd = sqlutils(
-    #     Path(os.path.join(os.path.dirname(__file__), "../../data/friands.db")).resolve()
-    # )
-
     # Select des avis pour le restaurant d'id 'id_restaurant'
     query = f"SELECT avis.id_restaurant, avis.contenu_avis, restaurants.nom FROM avis JOIN restaurants ON avis.id_restaurant = restaurants.id_restaurant WHERE avis.id_restaurant = {id_restaurant}"
     success, t_avis = bdd.select(query)
