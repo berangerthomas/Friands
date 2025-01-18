@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import re
+import os
 from pathlib import Path
 from sqlutils import sqlutils
 
@@ -8,10 +8,10 @@ from sqlutils import sqlutils
 def transform_to_df_join(db, query):
     """
     Transforme les données d'une requête SQL avec jointure en DataFrame.
-    Args : 
+    Args :
         db : objet sqlutils
         query : requête SQL
-    Returns :   
+    Returns :
         df : DataFrame
     """
     success, data = db.select(query)
@@ -21,20 +21,24 @@ def transform_to_df_join(db, query):
             from_part = query.split("FROM")[1].strip()
             tables_part = from_part.split("WHERE")[0].strip()
             table_names = [t.strip() for t in tables_part.split(",")]
-            
+
             columns = []
             for table_name in table_names:
                 # Récupérer les colonnes pour chaque table avec PRAGMA
                 pragma_result = db.select(f"PRAGMA table_info({table_name});")
                 if pragma_result[0]:
-                    columns.extend([f"{table_name}.{col[1]}" for col in pragma_result[1]])
+                    columns.extend(
+                        [f"{table_name}.{col[1]}" for col in pragma_result[1]]
+                    )
                 else:
-                    print(f"Erreur : Impossible de récupérer les colonnes pour {table_name}.")
+                    print(
+                        f"Erreur : Impossible de récupérer les colonnes pour {table_name}."
+                    )
                     return None
         else:
             # Extraire les colonnes directement depuis la requête
             select_part = query.split("FROM")[0].strip()
-            columns = [col.strip() for col in select_part[len("SELECT "):].split(",")]
+            columns = [col.strip() for col in select_part[len("SELECT ") :].split(",")]
 
         # Vérifier que le nombre de colonnes correspond aux données
         if len(data[0]) != len(columns):
@@ -48,6 +52,7 @@ def transform_to_df_join(db, query):
         print("Erreur lors de la récupération des données.")
         return None
 
+
 def get_db():
     """
     Récupère la base de données SQLite
@@ -59,11 +64,12 @@ def get_db():
     db = sqlutils(db_path)
     return db
 
+
 def transform_to_df(table_name, db, query):
     """
     Transforme les données d'une requête SQL sans jointure en DataFrame.
 
-    Args: 
+    Args:
         table_name : nom de la table
         db : objet sqlutils
         query : requête SQL
@@ -71,7 +77,7 @@ def transform_to_df(table_name, db, query):
         df : DataFrame
     """
     success, data = db.select(query)
-    
+
     # Vérifier si la requête a réussi
     if success:
         # Si la requête contient '*', récupérer les colonnes de la table
@@ -88,7 +94,7 @@ def transform_to_df(table_name, db, query):
     else:
         print("Erreur lors de la récupération des données.")
         return None
-    
+
     return df
 
 
@@ -96,7 +102,7 @@ def transform_to_df(table_name, db, query):
 def generate_circle(lat, lon, rayon, num_points=100):
     """
     Génère les coordonnées d'un cercle autour d'un point donné.
-    
+
     Args:
         lat (float): Latitude du centre du cercle
         lon (float): Longitude du centre du cercle
@@ -109,29 +115,30 @@ def generate_circle(lat, lon, rayon, num_points=100):
     """
     circle_lats = []
     circle_lons = []
-    
+
     # Convertir le rayon en degrés
     radius_deg = rayon / 111320  # 1 degré de latitude ~ 111.32 km
-    
+
     # Générer les points autour du centre du cercle
     for i in range(num_points):
         angle = 2 * np.pi * i / num_points  # Calcul de l'angle pour chaque point
         delta_lat = radius_deg * np.sin(angle)
         delta_lon = radius_deg * np.cos(angle) / np.cos(np.radians(lat))
-        
+
         new_lat = lat + delta_lat
         new_lon = lon + delta_lon
-        
+
         circle_lats.append(new_lat)
         circle_lons.append(new_lon)
-    
+
     return circle_lats, circle_lons
+
 
 def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
     """
     Récupère les données d'une colonne en fonction de l'année.
 
-    Args:  
+    Args:
         df : DataFrame
         date_column : nom de la colonne contenant les dates
         col_to_group : nom de ou des colonnes à grouper
@@ -141,18 +148,25 @@ def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
         grp_years : Df contenant les données agrégées par année
     """
     # Suppression de la partie heures:min:sec pour certaines dates
-    df[date_column] = df[date_column].str.split(' ', n=1).str[0] if df[date_column].dtype == 'object' else df[date_column]
+    df[date_column] = (
+        df[date_column].str.split(" ", n=1).str[0]
+        if df[date_column].dtype == "object"
+        else df[date_column]
+    )
 
     df[f"{date_column}"] = pd.to_datetime(df[f"{date_column}"])
     df.loc[:, "année"] = df[f"{date_column}"].dt.year
-    
-    if fun == 'mean':
-        grp_years = df.groupby(col_to_group)[f'{col_to_analyze}'].mean().reset_index()
-    elif fun == 'nunique':
-        grp_years = df.groupby(col_to_group)[f'{col_to_analyze}'].nunique().reset_index()
+
+    if fun == "mean":
+        grp_years = df.groupby(col_to_group)[f"{col_to_analyze}"].mean().reset_index()
+    elif fun == "nunique":
+        grp_years = (
+            df.groupby(col_to_group)[f"{col_to_analyze}"].nunique().reset_index()
+        )
     else:
         raise ValueError("L'argument fun doit être soit 'mean' ou 'nunique'.")
     return grp_years
+
 
 def selected_tags_any(row_tags, selected_tags):
     """
@@ -164,10 +178,11 @@ def selected_tags_any(row_tags, selected_tags):
     Returns:
         bool: True si au moins un tag correspond, False sinon
     """
-    row_tags_set = set(map(str.strip, row_tags.split(","))) 
-    return any(tag in row_tags_set for tag in selected_tags) 
+    row_tags_set = set(map(str.strip, row_tags.split(",")))
+    return any(tag in row_tags_set for tag in selected_tags)
 
-def retrieve_filter_list(df_col): 
+
+def retrieve_filter_list(df_col):
     """
     Preprocesse une colonne pour obtenir une liste unique d'éléments
 
@@ -179,11 +194,12 @@ def retrieve_filter_list(df_col):
     tags_list = df_col.str.split(",").explode().str.strip()
     return tags_list.unique()
 
+
 # def tags_cleans(tags):
 #     """
 #     Nettoie les tags en supprimant les caractères spéciaux
 
-#     Args:       
+#     Args:
 #         tags (list): Liste des tags
 #     Returns:
 #         tags_clean (list): Liste des tags nettoyés
@@ -191,7 +207,7 @@ def retrieve_filter_list(df_col):
 #     if any('€' in tag for tag in tags):
 #         # Filtrage des caractères non alphanumériques sauf espaces, accents et "/"
 #         tags_clean = [re.sub(r'[^a-zA-Z0-9À-ÿ/ ]', '', tag) for tag in tags]
-        
+
 #         # Suppression des éléments vides
 #         tags_clean = [tag for tag in tags_clean if tag]
 #     else:
@@ -199,7 +215,8 @@ def retrieve_filter_list(df_col):
 #         tags_clean = tags
 #     return tags_clean
 
-def check_url (url, db):
+
+def check_url(url, db):
     """
     Vérifie si l'URL du restaurant est déjà dans la base de données
 
@@ -209,11 +226,12 @@ def check_url (url, db):
     Returns:
         bool: True si l'URL est déjà dans la base, False
     """
-    query = transform_to_df("restaurants",db,"SELECT url FROM restaurants;")
-    existing_urls = query['url'].tolist()
+    query = transform_to_df("restaurants", db, "SELECT url FROM restaurants;")
+    existing_urls = query["url"].tolist()
     return url in existing_urls
 
-def check_no_null (db, column_name, table_name):
+
+def check_no_null(db, column_name, table_name):
     """
     Vérifie qu'une colonne ne possède plus de valeurs nulles.
 
@@ -227,14 +245,60 @@ def check_no_null (db, column_name, table_name):
     """
     query = f"SELECT COUNT(*) FROM {table_name} WHERE {column_name} IS NULL"
     success, result = db.select(query)
-    
+
     if not success:
-        raise Exception(f"""Erreur lors de l'exécution de la requête la colonne {column_name} de {table_name} contient des valeurs nulls :
-                        \n {result}""")
-    
+        raise Exception(
+            f"""Erreur lors de l'exécution de la requête la colonne {column_name} de {table_name} contient des valeurs nulls :
+                        \n {result}"""
+        )
+
     return result[0][0] == 0
 
 
+def delete_restaurant(bdd, id_restaurant):
+    """
+    Supprime un restaurant de la base de données.
 
+    Args:
+        bdd: Instance de la base de données.
+        id_restaurant (int): ID du restaurant à supprimer.
 
+    Returns:
+        tuple: Booléen indiquant si la suppression a réussi (True) ou non (False),
+        message d'erreur en cas d'échec.
+    """
+    try:
+        success1, message1 = bdd.delete(
+            table_name="geographie", where=[f"id_restaurant = {id_restaurant}"]
+        )
+        success2, message2 = bdd.delete(
+            table_name="avis", where=[f"id_restaurant = {id_restaurant}"]
+        )
+        success3, message3 = bdd.delete(
+            table_name="restaurants", where=[f"id_restaurant = {id_restaurant}"]
+        )
 
+        if not success1 or not success2 or not success3:
+            bdd.rollback()
+            raise Exception(f"{message1}\n{message2}\n{message3}")
+        else:
+            # Supression de l'image wordcloud dans assets
+            # Obtenir le chemin absolu
+            try:
+                base_path = os.path.dirname(os.path.abspath(__file__))
+                file_path = os.path.join(
+                    base_path, "assets", f"wordcloud_{id_restaurant}.png"
+                )
+                Path(file_path).unlink(missing_ok=True)
+            except Exception as e:
+                return False, f"Erreur lors de la suppression de l'image : {file_path}"
+            bdd.commit()
+            return (
+                True,
+                f"Le restaurant {id_restaurant} a été supprimé avec succès !",
+            )
+    except Exception as e:
+        return (
+            False,
+            f"Erreur lors de la suppression du restaurant {id_restaurant} : {e}",
+        )
