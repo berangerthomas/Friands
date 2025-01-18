@@ -20,9 +20,6 @@ def generate_label(id_restaurant):
     db_path = Path("data/friands.db")
     bdd = sqlutils(db_path)
 
-    # bdd = sqlutils(
-    #     Path(os.path.join(os.path.dirname(__file__), "../../data/friands.db")).resolve()
-    # )
     query = f"SELECT id_avis, contenu_avis FROM avis WHERE id_restaurant = {id_restaurant} AND label IS NULL"
     success, t_avis = bdd.select(query)
 
