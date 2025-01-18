@@ -1,5 +1,11 @@
 import streamlit as st
-from function_app import get_db, transform_to_df_join, generate_circle, retrieve_year
+from function_app import (
+    get_db,
+    transform_to_df_join,
+    generate_circle,
+    retrieve_year,
+    delete_restaurant,
+)
 import plotly.graph_objects as go
 import pandas as pd
 
@@ -428,6 +434,7 @@ with tab2:
 
     st.plotly_chart(fig_distribution)
 
+
 ################################################## AVIS ##################################################
 # Afficher les avis du restaurant
 st.write("### Avis des clients")
@@ -565,12 +572,13 @@ if st.session_state["show_avis"]:
             st.markdown(f"**Avis:** {avis}")
 
 
-def delete_restaurant(bdd, id_restaurant):
-    try:
-        bdd.delete(f"DELETE FROM avis WHERE id_restaurant = {id_restaurant};")
-        bdd.delete(f"DELETE FROM geographie WHERE id_restaurant = {id_restaurant};")
-        bdd.delete(f"DELETE FROM restaurants WHERE id_restaurant = {id_restaurant};")
-        bdd.commit()
-    except Exception as e:
-        bdd.rollback()
-        print(f"Erreur lors de la suppression du restaurant {id_restaurant} : {e}")
+################################################## DELETE ##################################################
+# Bouton pour supprimer le restaurant actuellement sélectionné
+delete_button = st.button("Supprimer ce restaurant")
+if delete_button:
+    id_resto = selected_data["restaurants.id_restaurant"].values[0]
+    success, message = delete_restaurant(db, id_resto)
+    if success:
+        st.success(f"{message}\nRafraîchissez la page pour voir les changements.")
+    else:
+        st.error(message)
