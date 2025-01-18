@@ -14,6 +14,8 @@ import locale
 
 # Définir la locale pour les dates en français
 locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
+#locale.setlocale(locale.LC_TIME, "French_France.1252")
+
 
 # Définir des headers réalistes pour éviter d'être bloqué
 headers = {
@@ -356,7 +358,7 @@ def process_pipeline(url, db):
 
     try:
         attempts = 0
-        max_attempts = 10
+        max_attempts = 15
 
         while attempts < max_attempts:
             # Appeler la fonction de scraping

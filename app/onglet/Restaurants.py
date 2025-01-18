@@ -162,7 +162,7 @@ with col2:
 # with col8:
 #     selected_id = selected_data['restaurants.id_restaurant'].values[0]
 #     st.image(f"assets/wordcloud_{selected_id}.png", width=600, caption="Nuage de mots pour le restaurant sélectionné")
-st.subheader(f"Résumé des avis clients de {selected_restaurant}")
+st.subheader(f"Résumé des avis clients de {selected_restaurant} des 18 derniers mois")
 st.markdown(
     f"""
     <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
@@ -435,6 +435,17 @@ with tab2:
     st.plotly_chart(fig_distribution)
 
 
+################################################## DELETE ##################################################
+# Bouton pour supprimer le restaurant actuellement sélectionné
+delete_button = st.button("Supprimer ce restaurant")
+if delete_button:
+    id_resto = selected_data["restaurants.id_restaurant"].values[0]
+    success, message = delete_restaurant(db, id_resto)
+    if success:
+        st.success(f"{message}\nRafraîchissez la page pour voir les changements.")
+    else:
+        st.error(message)
+
 ################################################## AVIS ##################################################
 # Afficher les avis du restaurant
 st.write("### Avis des clients")
@@ -444,6 +455,7 @@ if "show_avis" not in st.session_state:
     st.session_state["show_avis"] = False
 
 button_avis = st.button("Découvrir tous les avis")
+
 
 if button_avis:
     st.session_state["show_avis"] = not st.session_state["show_avis"]
@@ -494,35 +506,6 @@ if st.session_state["show_avis"]:
 
     search_text = st.text_input("Recherchez un mot clé parmis tous les avis")
 
-    # # Filtrage des avis
-    # if selected_notes and selected_sentiments:
-    #     # Appliquer le filtre de notes et de sentiments uniquement si des notes et des sentiments sont sélectionnés
-    #     filtered_avis = avis[
-    #         (avis["Date de l'avis"] >= debut_date)
-    #         & (avis["Date de l'avis"] <= fin_date)
-    #         & (avis["Note du restaurant"].isin(selected_notes))
-    #         & (avis["Sentiment"].isin(selected_sentiments))
-    #     ].copy()
-    # elif selected_notes:
-    #     # Appliquer le filtre de notes uniquement si des notes sont sélectionnées
-    #     filtered_avis = avis[
-    #         (avis["Date de l'avis"] >= debut_date)
-    #         & (avis["Date de l'avis"] <= fin_date)
-    #         & (avis["Note du restaurant"].isin(selected_notes))
-    #     ].copy()
-    # elif selected_sentiments:
-    #     # Appliquer le filtre de sentiments uniquement si des sentiments sont sélectionnés
-    #     filtered_avis = avis[
-    #         (avis["Date de l'avis"] >= debut_date)
-    #         & (avis["Date de l'avis"] <= fin_date)
-    #         & (avis["Sentiment"].isin(selected_sentiments))
-    #     ].copy()
-    # else:
-    #     # Ne pas appliquer de filtre sur les notes ou les sentiments si aucun n'est sélectionné
-    #     filtered_avis = avis[
-    #         (avis["Date de l'avis"] >= debut_date) & (avis["Date de l'avis"] <= fin_date)
-    #     ].copy()
-
     # Filtrage des avis
     filtered_avis = avis[
         (avis["Date de l'avis"] >= debut_date) & (avis["Date de l'avis"] <= fin_date)
@@ -572,13 +555,4 @@ if st.session_state["show_avis"]:
             st.markdown(f"**Avis:** {avis}")
 
 
-################################################## DELETE ##################################################
-# Bouton pour supprimer le restaurant actuellement sélectionné
-delete_button = st.button("Supprimer ce restaurant")
-if delete_button:
-    id_resto = selected_data["restaurants.id_restaurant"].values[0]
-    success, message = delete_restaurant(db, id_resto)
-    if success:
-        st.success(f"{message}\nRafraîchissez la page pour voir les changements.")
-    else:
-        st.error(message)
+

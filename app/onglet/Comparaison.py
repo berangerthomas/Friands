@@ -2,6 +2,9 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 from function_app import get_db, transform_to_df_join, retrieve_year, selected_tags_any, retrieve_filter_list
+from inter_restaurants import plot_restaurant_similarities
+import pandas as pd
+
 
 # Chargement de la base de données
 db = get_db()
@@ -28,7 +31,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Afficher les aspects des restaurants
-cols1, cols2, cols3, cols4 = st.columns([1, 1, 1, 1])
+cols1, cols2, cols3, cols4, cols5 = st.columns([1, 1, 1, 1, 1])
 
 with cols1:
     st.markdown("""
@@ -65,6 +68,15 @@ with cols4:
         </div>
     """, unsafe_allow_html=True)
 
+with cols5 :
+    st.markdown("""
+        <div style="background: linear-gradient(to right, #ffd166, #ffb74d); padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
+            <h3 style="color: #fff; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 18px;">
+                🔍 Recommendation
+            </h3>
+        </div>
+    """, unsafe_allow_html=True)
+
 # Petit texte introductif sous les blocs
 st.markdown("""
     <div style=" padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
@@ -73,9 +85,6 @@ st.markdown("""
         </p>
     </div>
 """, unsafe_allow_html=True)
-
-
-
 
 # Récupérer les tags et les prix des restaurants
 resto_tags = retrieve_filter_list(restaurants['restaurants.tags'])
@@ -177,14 +186,14 @@ st.plotly_chart(fig4)
 #################################### Sentiment Analysis ###################################
 st.subheader("📈 Analyse des sentiments 📉")
 # Recoder les sentiments
-filtered_clients.loc[: ,'avis.label_sentiment']= filtered_clients['avis.label'].replace({5: "Positif", 4: "Positif", 3: "Neutre", 2: "Négatif", 1: "Négatif"}).copy()
+filtered_clients.loc[: ,'avis.label_sentiment'] = filtered_clients['avis.label'].replace({5: "Positif", 4: "Positif", 3: "Neutre", 2: "Négatif", 1: "Négatif"})
 
 # Calculer les proportions de chaque sentiment pour chaque restaurant
 sentiment_counts = filtered_clients.groupby(['restaurants.nom', 'avis.label_sentiment']).size().reset_index(name='counts')
 sentiment_totals = filtered_clients.groupby('restaurants.nom').size().reset_index(name='total_counts')
 sentiment_counts = sentiment_counts.merge(sentiment_totals, on='restaurants.nom')
 sentiment_counts['proportion'] = sentiment_counts['counts'] / sentiment_counts['total_counts'] * 100
-import pandas as pd
+
 # Assurer l'ordre des sentiments : Positif, Neutre, Négatif
 sentiment_counts['avis.label_sentiment'] = pd.Categorical(
     sentiment_counts['avis.label_sentiment'], 
@@ -257,12 +266,38 @@ with col1:
     )
 
     st.plotly_chart(fig6)
-    if st.button("Voir le classement complet"):
-        with col2:
-            st.write('')
+    
+    with col2:
+        st.write('')
+        st.write('')
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('')    
+        if st.button("Voir le classement complet"):
 
-        with col3:
-            st.write('')
-            st.write('')
-            st.write('')
-            st.dataframe(restaurant_counts[["Nom", "Rang", "Nombre de notes"]])
+            with col3:
+                st.write('')
+                st.write('')
+                st.write('')
+                st.dataframe(restaurant_counts[["Nom", "Rang", "Nombre de notes"]])
+
+############################################## Recommendation ############################################
+st.subheader("🔍 Recommandation de restaurants 🔍")
+st.write("""Vous pouvez visualiser les restaurants en se basant sur leur similarité.<br>
+        Plus les restaurants sont proches, plus ils sont similaires.<br>
+         """, unsafe_allow_html=True)
+st.write('')
+if st.button("Voir les restaurants similaires"):
+    st.write("Le chargement de la similiraté des restaurants peut prendre quelques instants. <br> L'étude de la similarité s'ouvrira dans une nouvelle fenêtre", unsafe_allow_html=True)
+    plot_restaurant_similarities()
+

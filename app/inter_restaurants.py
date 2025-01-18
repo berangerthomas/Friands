@@ -9,8 +9,9 @@ import nltk
 import numpy as np
 from sklearn.decomposition import PCA
 import plotly.express as px
-import os
-
+import gensim 
+import streamlit as st
+from gensim.models import Word2Vec
 
 def clean_text(text, stopwords=set()) -> str:
     """
@@ -46,7 +47,7 @@ def remove_stopwords(text, stop_words):
 
 def plot_restaurant_similarities():
     # Accès à la base de données
-    db_path = Path("app/data/friands.db")
+    db_path = Path("data/friands.db")
     bdd = sqlutils(db_path)
 
     # Récupération des avis de tous les restaurants
@@ -60,8 +61,8 @@ def plot_restaurant_similarities():
         print(
             f"Extraction de {len(t_avis)} enregistrements depuis la base de données réussie"
         )
-
-    # # Insérer les champs extraits de la base de données dans un dataframe
+    
+    # Insérer les champs extraits de la base de données dans un dataframe
     df = pd.DataFrame(
         t_avis,
         columns=[
@@ -109,8 +110,7 @@ def plot_restaurant_similarities():
         lambda avis: remove_stopwords(avis, stop_words)
     )
 
-    import gensim
-    from gensim.models import Word2Vec
+
 
     # Convert text data to list of words for each review
     corpus_liste = [review.split() for review in df["avis_no_stopwords"]]
