@@ -296,8 +296,9 @@ st.subheader("🔍 Recommandation de restaurants 🔍")
 st.write("""Vous pouvez visualiser les restaurants en se basant sur leur similarité.<br>
         Plus les restaurants sont proches, plus ils sont similaires.<br>
          """, unsafe_allow_html=True)
-st.write('')
+placeholder = st.empty()
+
 if st.button("Voir les restaurants similaires"):
-    st.write("Le chargement de la similiraté des restaurants peut prendre quelques instants. <br> L'étude de la similarité s'ouvrira dans une nouvelle fenêtre", unsafe_allow_html=True)
+    placeholder.write("Le chargement de la similiraté des restaurants peut prendre quelques instants.", unsafe_allow_html=True)
     plot_restaurant_similarities()
 
