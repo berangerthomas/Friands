@@ -299,5 +299,4 @@ class sqlutils:
             even if the object is not explicitly closed.
         """
         self.commit()
-        self.cursor.close()
         self.db.close()

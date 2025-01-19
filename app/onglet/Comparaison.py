@@ -136,7 +136,7 @@ note_moyenne = filtered_restaurants["restaurants.note_globale"].mean()
 tab1, tab2 = st.tabs(["Note globale", "Distribution de la Note Gloable"])
 with tab1:
     fig3 = px.bar(
-        filtered_restaurants,
+        filtered_restaurants.sort_values(by='restaurants.nom'),
         x="restaurants.nom",
         y="restaurants.note_globale",
         title="Comparaison des notes globales",
@@ -156,7 +156,7 @@ with tab1:
 
 with tab2:
     fig5 = px.box(
-        filtered_clients,
+        filtered_clients.sort_values(by='restaurants.nom'),
         y="avis.note_restaurant",
         x="restaurants.nom",
         title="Variabilité des notes",
@@ -166,13 +166,14 @@ with tab2:
     fig5.update_xaxes(tickangle=315)
 
     st.plotly_chart(fig5)
+    
 #################################### Nombre d'utilisateurs ###################################
-
 st.subheader("🔢 Nombre d'utilisateurs 🔢")
 
 # Appel de la fonction retrieve pour obtenir le nombre de clients par an
 col_to_group = ['année', 'restaurants.nom']
-nombre_clients_an = retrieve_year(filtered_clients, "avis.date_avis", col_to_group, "avis.nom_utilisateur", 'nunique')
+
+nombre_clients_an = retrieve_year(filtered_clients.copy(), "avis.date_avis", col_to_group, "avis.nom_utilisateur", 'nunique')
 
 fig4 = px.line(nombre_clients_an, x='année',
             y='avis.nom_utilisateur',
@@ -185,7 +186,9 @@ st.plotly_chart(fig4)
 
 #################################### Sentiment Analysis ###################################
 st.subheader("📈 Analyse des sentiments 📉")
+
 # Recoder les sentiments
+filtered_clients = filtered_clients.copy()
 filtered_clients.loc[: ,'avis.label_sentiment'] = filtered_clients['avis.label'].replace({5: "Positif", 4: "Positif", 3: "Neutre", 2: "Négatif", 1: "Négatif"})
 
 # Calculer les proportions de chaque sentiment pour chaque restaurant
@@ -219,7 +222,10 @@ fig_sentiments = px.bar(
         'Neutre': 'rgba(255, 165, 0, 0.6)', 
         'Négatif': 'rgba(255, 0, 0, 0.6)' 
     }
+
 )
+fig_sentiments.update_xaxes(tickangle=315)
+
 
 # Afficher le graphique
 st.plotly_chart(fig_sentiments)
@@ -299,6 +305,6 @@ st.write("""Vous pouvez visualiser les restaurants en se basant sur leur similar
 placeholder = st.empty()
 
 if st.button("Voir les restaurants similaires"):
-    placeholder.write("Le chargement de la similiraté des restaurants peut prendre quelques instants.", unsafe_allow_html=True)
+    placeholder.write("Le chargement peut prendre quelques instants.", unsafe_allow_html=True)
     plot_restaurant_similarities()
 

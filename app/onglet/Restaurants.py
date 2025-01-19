@@ -8,6 +8,7 @@ from function_app import (
 )
 import plotly.graph_objects as go
 import pandas as pd
+import os
 
 
 # Chargement de la base de données
@@ -26,12 +27,11 @@ avis_requete = transform_to_df_join(
                                         WHERE restaurants.id_restaurant = avis.id_restaurant;""",
 )
 
-# Ajouter un selectbox pour choisir un restaurant
 # Titre principal stylisé
 st.markdown(
     """
     <h1 style="font-size: 40px; color: #3C6E47; text-align: center;">
-        🔍 <span style="font-weight: bold;">Comparaison des restaurants</span> 🔍
+        🔍 <span style="font-weight: bold;">Zoom sur un restaurant</span> 🔍
     </h1>
 """,
     unsafe_allow_html=True,
@@ -50,6 +50,8 @@ st.markdown(
 
 ################################################## Informations Restaurants ##################################################
 st.subheader("Sélectionnez un restaurant")
+
+# Création d'un filtre pour sélectionner un restaurant
 selected_restaurant = st.selectbox(
     "Choisissez un restaurant",
     sorted(restaurants["restaurants.nom"].unique()),
@@ -62,7 +64,7 @@ avis = avis_requete[avis_requete["restaurants.nom"] == selected_restaurant].copy
 
 col1, col2 = st.columns([1, 2])
 
-# Afficher les informations du restaurant sélectionné avec style
+# Afficher les informations du restaurant sélectionné
 with col1:
     st.markdown(
         f"""
@@ -141,51 +143,29 @@ with col2:
     st.plotly_chart(fig)
 ################################################## Résumé et WordCloud ##################################################
 
-# st.write("")
-# st.write("")
-# st.write("")
-# col6, col7, col8 = st.columns([3,1,3])
-# with col6:
-#     st.subheader("Résumé des avis clients du restaurant")
-#     st.markdown(
-#         f"""
-#         <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
-#             {selected_data['restaurants.summary'].values[0]}
-#         </div>
-#         """,
-#         unsafe_allow_html=True
-#     )
+st.write("")
+st.write("")
+st.write("")
+col6, col7 = st.columns([4,1])
+with col6:
+    st.subheader(f"Résumé des avis clients de {selected_restaurant} des 18 derniers mois")
+    st.markdown(
+        f"""
+        <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
+            {selected_data['restaurants.summary'].values[0]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-# with col7:
-#     st.write("")
+with col7:
+    selected_id = selected_data["restaurants.id_restaurant"].values[0]
+    st.image(
+        f"assets/wordcloud_{selected_id}.png",
+        width=400,
+        caption=f"Mots les plus fréquents pour {selected_restaurant}",
+    )
 
-# with col8:
-#     selected_id = selected_data['restaurants.id_restaurant'].values[0]
-#     st.image(f"assets/wordcloud_{selected_id}.png", width=600, caption="Nuage de mots pour le restaurant sélectionné")
-st.subheader(f"Résumé des avis clients de {selected_restaurant} des 18 derniers mois")
-st.markdown(
-    f"""
-    <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
-        {selected_data['restaurants.summary'].values[0]}
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.write("")
-st.write("")
-st.write("")
-
-selected_id = selected_data["restaurants.id_restaurant"].values[0]
-st.image(
-    f"assets/wordcloud_{selected_id}.png",
-    width=600,
-    caption="Nuage de mots pour le restaurant sélectionné",
-)
-
-st.write("")
-st.write("")
-st.write("")
 
 ################################################## Temporalité des notes ##################################################
 
@@ -438,16 +418,7 @@ with tab2:
     st.plotly_chart(fig_distribution)
 
 
-################################################## DELETE ##################################################
-# Bouton pour supprimer le restaurant actuellement sélectionné
-delete_button = st.button("Supprimer ce restaurant")
-if delete_button:
-    id_resto = selected_data["restaurants.id_restaurant"].values[0]
-    success, message = delete_restaurant(db, id_resto)
-    if success:
-        st.success(f"{message}\nRafraîchissez la page pour voir les changements.")
-    else:
-        st.error(message)
+
 
 ################################################## AVIS ##################################################
 # Afficher les avis du restaurant
@@ -495,7 +466,7 @@ if st.session_state["show_avis"]:
         unique_notes = avis["Note du restaurant"].unique()
         unique_notes = sorted([int(note) for note in unique_notes])
         selected_notes = st.multiselect(
-            "Sélectionnez les notes qui vous intéressent ⭐", unique_notes
+            "Sélectionnez les notes qui vous intéressent", unique_notes
         )
 
     with col12:
@@ -556,6 +527,16 @@ if st.session_state["show_avis"]:
         ):
             st.markdown(f"**Titre:** {titre}")
             st.markdown(f"**Avis:** {avis}")
-
+            
+################################################## DELETE ##################################################
+# Bouton pour supprimer le restaurant actuellement sélectionné
+delete_button = st.button("Supprimer ce restaurant")
+if delete_button:
+    id_resto = selected_data["restaurants.id_restaurant"].values[0]
+    success, message = delete_restaurant(db, id_resto)
+    if success:
+        st.success(f"{message}\nRafraîchissez la page pour voir les changements.")
+    else:
+        st.error(message)
 
 

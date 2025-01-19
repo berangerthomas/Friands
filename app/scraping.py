@@ -6,7 +6,6 @@ import requests
 import time
 import random
 from bs4 import BeautifulSoup
-
 from sqlutils import sqlutils
 from schemaDB import schemaDB
 import locale
@@ -14,7 +13,6 @@ import locale
 
 # Définir la locale pour les dates en français
 locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
-#locale.setlocale(locale.LC_TIME, "French_France.1252")
 
 
 # Définir des headers réalistes pour éviter d'être bloqué

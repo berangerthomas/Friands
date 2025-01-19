@@ -3,8 +3,6 @@ import os
 import pandas as pd
 from pathlib import Path
 from sqlutils import sqlutils
-import time
-import streamlit as st
 
 
 class MistralAPI:
@@ -81,7 +79,6 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
 
     # Convertir la date en YYYY-MM-DD
     date_min = date_min.strftime("%Y-%m-%d")
-    print(f"date_min : {date_min}")
 
     # Extraire tous les avis dont la date est supérieure à date_min
     success, t_avis = bdd.select(
@@ -145,7 +142,6 @@ def generate_summary(id_resto, cle_api_mistral, nb_mois=18):
             "label",
         ],
     )
-    print(df)
     # joindre tous les avis pour le restaurant
     df_grouped = (
         df.groupby("id_restaurant")

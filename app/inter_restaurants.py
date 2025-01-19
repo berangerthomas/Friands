@@ -9,7 +9,6 @@ import nltk
 import numpy as np
 from sklearn.decomposition import PCA
 import plotly.express as px
-import gensim 
 import streamlit as st
 from gensim.models import Word2Vec
 
