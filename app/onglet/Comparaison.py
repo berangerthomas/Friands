@@ -213,7 +213,7 @@ fig_sentiments = px.bar(
     color='avis.label_sentiment',
     labels={
         'restaurants.nom': 'Nom du restaurant', 
-        'proportion': 'Proportion', 
+        'proportion': 'Proportion%', 
         'avis.label_sentiment': 'Sentiment'
     },
     title='Proportion des sentiments pour chaque restaurant',
