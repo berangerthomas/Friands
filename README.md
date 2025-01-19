@@ -32,7 +32,8 @@ Friands (Finding Restaurants, Insights And Notably Delectable Spots) is a restau
 Make sure you have :
 - [Docker Desktop](https://docs.docker.com/get-docker/) installed and running,
 - [Docker Compose](https://docs.docker.com/compose/install/) installed and executable
-- 10GB available disk space to download ML models,
+- 10GB available disk space,
+- one [Mistral API Key](https://console.mistral.ai/api-keys/)
 - and a stable internet connection.
 
 ## Getting Started
