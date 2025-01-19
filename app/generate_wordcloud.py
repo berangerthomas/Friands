@@ -56,8 +56,8 @@ def makeImage(text, script_path, id_restaurant):
         background_color=None,  # transparent
         mode="RGBA",
         max_words=350,
-        width=960,  # largeur
-        height=540,  # hauteur
+        width=1600,  # largeur
+        height=350,  # hauteur
     )
     # Générer le word cloud
     nuage.generate_from_frequencies(text)

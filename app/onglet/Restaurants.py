@@ -146,23 +146,24 @@ with col2:
 st.write("")
 st.write("")
 st.write("")
-col6, col7 = st.columns([4,1])
-with col6:
-    st.subheader(f"Résumé des avis clients de {selected_restaurant} des 18 derniers mois")
-    st.markdown(
-        f"""
-        <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
-            {selected_data['restaurants.summary'].values[0]}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
-with col7:
-    selected_id = selected_data["restaurants.id_restaurant"].values[0]
+st.subheader(f"Résumé des avis clients de {selected_restaurant} des 18 derniers mois")
+st.markdown(
+    f"""
+    <div style='border: 2px solid #ccc; padding: 10px; border-radius: 10px; background-color: #fff; color: #000; font-weight: normal;'>
+        {selected_data['restaurants.summary'].values[0]}
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+selected_id = selected_data["restaurants.id_restaurant"].values[0]
+st.subheader(f"Wordcloud pour {selected_restaurant}")
+col_left, col_mid, col_right = st.columns([0.5, 2, 0.5])
+with col_mid:
     st.image(
         f"assets/wordcloud_{selected_id}.png",
-        width=400,
+        use_container_width=True,
         caption=f"Mots les plus fréquents pour {selected_restaurant}",
     )
 
@@ -349,8 +350,8 @@ with tab1:
             )
         )
 
-    if negatif >0:
-           fig_sa.add_trace(
+    if negatif > 0:
+        fig_sa.add_trace(
             go.Scatter(
                 x=sentiment_proportions.index,
                 y=sentiment_proportions["Négatif"],
@@ -416,8 +417,6 @@ with tab2:
     )
 
     st.plotly_chart(fig_distribution)
-
-
 
 
 ################################################## AVIS ##################################################
@@ -527,7 +526,7 @@ if st.session_state["show_avis"]:
         ):
             st.markdown(f"**Titre:** {titre}")
             st.markdown(f"**Avis:** {avis}")
-            
+
 ################################################## DELETE ##################################################
 # Bouton pour supprimer le restaurant actuellement sélectionné
 delete_button = st.button("Supprimer ce restaurant")
@@ -538,5 +537,3 @@ if delete_button:
         st.success(f"{message}\nRafraîchissez la page pour voir les changements.")
     else:
         st.error(message)
-
-

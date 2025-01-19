@@ -1,5 +1,5 @@
 # Friands - Finding Restaurants, Insights And Notably Delectable Spots
-
+### Streamlit Restaurant Discovery App
 ## Table of Contents
 
 - [Overview](#overview)
