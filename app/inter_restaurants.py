@@ -9,8 +9,8 @@ import nltk
 import numpy as np
 from sklearn.decomposition import PCA
 import plotly.express as px
-import os
-
+import streamlit as st
+from gensim.models import Word2Vec
 
 def clean_text(text, stopwords=set()) -> str:
     """
@@ -46,7 +46,7 @@ def remove_stopwords(text, stop_words):
 
 def plot_restaurant_similarities():
     # Accès à la base de données
-    db_path = Path("app/data/friands.db")
+    db_path = Path("data/friands.db")
     bdd = sqlutils(db_path)
 
     # Récupération des avis de tous les restaurants
@@ -60,8 +60,8 @@ def plot_restaurant_similarities():
         print(
             f"Extraction de {len(t_avis)} enregistrements depuis la base de données réussie"
         )
-
-    # # Insérer les champs extraits de la base de données dans un dataframe
+    
+    # Insérer les champs extraits de la base de données dans un dataframe
     df = pd.DataFrame(
         t_avis,
         columns=[
@@ -77,7 +77,7 @@ def plot_restaurant_similarities():
     if response.status_code == 200:
         mots_vides_github = response.text.splitlines()
     else:
-        print("Erreur lors de la récupération des mots vides depuis l'URL")
+        st.write("Erreur lors de la récupération des mots vides depuis l'URL")
 
     # Nettoyage des mots vides :
     #     - suppression des caractères diacritiques
@@ -92,7 +92,6 @@ def plot_restaurant_similarities():
 
     # Chargement du modèle français
     nlp = spacy.load("fr_core_news_sm")
-
     # Application de la fonction de lemmatisation sur le contenu des avis
     df[f"avis_lemmatized"] = df["avis_clean"].apply(
         lambda avis: lemmatize_text(avis, nlp)
@@ -109,8 +108,7 @@ def plot_restaurant_similarities():
         lambda avis: remove_stopwords(avis, stop_words)
     )
 
-    import gensim
-    from gensim.models import Word2Vec
+
 
     # Convert text data to list of words for each review
     corpus_liste = [review.split() for review in df["avis_no_stopwords"]]
@@ -175,4 +173,5 @@ def plot_restaurant_similarities():
     )
 
     fig.update_traces(textposition="top center")
-    fig.show()
+    st.plotly_chart(fig, use_container_width=True)
+

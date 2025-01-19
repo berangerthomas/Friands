@@ -4,8 +4,7 @@ from pathlib import Path
 import pandas as pd
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
-import sys
-import os
+
 
 
 def get_label(review, classifier):

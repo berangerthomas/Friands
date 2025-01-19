@@ -1,12 +1,15 @@
 import streamlit as st
 from function_app import get_db, transform_to_df, check_url
 import os
-
+import dotenv
 from scraping import *
 from summary_generator import *
 from sentiment_analysis import *
 from generate_wordcloud import *
 
+# Chargement des variables d'environnement
+dotenv.load_dotenv()
+api_key = os.getenv('MISTRAL_API_KEY')
 
 # Chargement de la base de données
 db = get_db()
@@ -26,6 +29,7 @@ st.write("""Vous pouvez ajouter un nouveau restaurant à la base de données en 
             Pour cela, rendez-vous sur la page du restaurant [TripAdvisor](https://www.tripadvisor.fr/), copiez l'URL et collez-la dans le champ ci-dessous. <br>
             L'opération prends plusieurs minutes. <br>
          """, unsafe_allow_html=True)
+
 # Formulaire pour ajouter un nouveau restaurant
 with st.form(key='add_restaurant_form'):
     url = st.text_input("Veuillez entrez le lien du restaurant TripAdvisor :")
@@ -53,41 +57,37 @@ if submit_button:
                 if check_url(url, db) :
                     placeholder_success.success("Restaurant ajouté avec succès !")
                     placeholder_info.write("Génération du résumé en cours...")
-
-                    # Itérer sur les id_restaurant et appeler generate_summary pour chacun
-                    cle_api_mistral = "wOB1K35GugrbguMCVZxQvs6imjLn99Gr"
                     
                     # Récupérer l'identifiant du restaurant
                     success, id_resto = db.select("SELECT max(id_restaurant) FROM restaurants")
 
-                    # Fermuture de la base pour éviter d'être bloqué par une autre requête
+                    # Fermuture de la base pour éviter les conflits
                     db.__del__()
-                    try : 
 
-                        for row in id_resto :
-                            success, message = generate_summary((row[0]), cle_api_mistral, nb_mois=18)
+                    try : 
+                            # Génération du résumé
+                            success, message = generate_summary((id_resto[0][0]), api_key, nb_mois=18)
                             
                             if success:
-                                print(f"Résumé généré pour le restaurant {(row[0])} : {message}")
+                                print(f"Résumé généré pour le restaurant {(id_resto[0][0])} : {message}")
                             else:
-                                print(f"Erreur pour le restaurant {(row[0])} : {message}")
+                                st.write(f"Erreur pour le restaurant {(id_resto[0][0])} : {message}")
                     
                     except Exception as e:
                         placeholder_success.error(f"Erreur lors de la génération des résumés : {e}")
                         placeholder_info.empty()  
 
                     try :
-                        placeholder_success.success("Génération des résumés effectué avec succès !")
+                        placeholder_success.success("Génération du résumé effectuée avec succès !")
                         placeholder_info.write("Calcul de la note de sentiment en cours...")
 
-                        for ligne in id_resto :
-
-                            success, message = generate_label(ligne[0])
-                            
-                            if success:
-                                print(f"Label pour {ligne[0]} : {message}")
-                            else:
-                                print(f"Erreur pour le restaurant {ligne[0]} : {message}")
+                        # Sentiment Analysis
+                        success, message = generate_label((id_resto[0][0]))
+                        
+                        if success:
+                            print(f"Label pour {(id_resto[0][0])} : {message}")
+                        else:
+                            print(f"Erreur pour le restaurant {(id_resto[0][0])} : {message}")
                     
 
                     except Exception as e:
@@ -98,13 +98,14 @@ if submit_button:
                         placeholder_success.success("Calcul de la note de sentiment effectué avec succès !")
                         placeholder_info.write("Génération du Wordcloud en cours...")
 
-                        if success:
-                            for row in id_resto:
-                                file_path = f"assets/wordcloud_{row[0]}.png"
-                                if not os.path.exists(file_path):
-                                    generate_wordcloud(row[0])
+                        # Wordcloud
+                        file_path = f"assets/wordcloud_{int(id_resto[0][0])}.png"
+
+                        # S'il existe on le crée
+                        if not os.path.exists(file_path):
+                            generate_wordcloud(int(id_resto[0][0]))
                         placeholder_info.empty()
-                        placeholder_success.success("""Calcul de note de sentiment effectué avec succès !
+                        placeholder_success.success("""Génération du wordcloud effectuée avec succès ! \n
                                                             Retournez sur la page de votre choix pour en apprendre plus sur ce nouveau restaurant.""")
                     
                     except Exception as e:

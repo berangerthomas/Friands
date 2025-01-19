@@ -2,6 +2,9 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 from function_app import get_db, transform_to_df_join, retrieve_year, selected_tags_any, retrieve_filter_list
+from inter_restaurants import plot_restaurant_similarities
+import pandas as pd
+
 
 # Chargement de la base de données
 db = get_db()
@@ -28,7 +31,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Afficher les aspects des restaurants
-cols1, cols2, cols3, cols4 = st.columns([1, 1, 1, 1])
+cols1, cols2, cols3, cols4, cols5 = st.columns([1, 1, 1, 1, 1])
 
 with cols1:
     st.markdown("""
@@ -65,6 +68,15 @@ with cols4:
         </div>
     """, unsafe_allow_html=True)
 
+with cols5 :
+    st.markdown("""
+        <div style="background: linear-gradient(to right, #ffd166, #ffb74d); padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
+            <h3 style="color: #fff; font-family: 'Arial', sans-serif; font-weight: 500; font-size: 18px;">
+                🔍 Recommendation
+            </h3>
+        </div>
+    """, unsafe_allow_html=True)
+
 # Petit texte introductif sous les blocs
 st.markdown("""
     <div style=" padding: 20px; border-radius: 15px; text-align: center; width: 100%; margin: auto;">
@@ -73,9 +85,6 @@ st.markdown("""
         </p>
     </div>
 """, unsafe_allow_html=True)
-
-
-
 
 # Récupérer les tags et les prix des restaurants
 resto_tags = retrieve_filter_list(restaurants['restaurants.tags'])
@@ -127,7 +136,7 @@ note_moyenne = filtered_restaurants["restaurants.note_globale"].mean()
 tab1, tab2 = st.tabs(["Note globale", "Distribution de la Note Gloable"])
 with tab1:
     fig3 = px.bar(
-        filtered_restaurants,
+        filtered_restaurants.sort_values(by='restaurants.nom'),
         x="restaurants.nom",
         y="restaurants.note_globale",
         title="Comparaison des notes globales",
@@ -147,7 +156,7 @@ with tab1:
 
 with tab2:
     fig5 = px.box(
-        filtered_clients,
+        filtered_clients.sort_values(by='restaurants.nom'),
         y="avis.note_restaurant",
         x="restaurants.nom",
         title="Variabilité des notes",
@@ -157,13 +166,14 @@ with tab2:
     fig5.update_xaxes(tickangle=315)
 
     st.plotly_chart(fig5)
+    
 #################################### Nombre d'utilisateurs ###################################
-
 st.subheader("🔢 Nombre d'utilisateurs 🔢")
 
 # Appel de la fonction retrieve pour obtenir le nombre de clients par an
 col_to_group = ['année', 'restaurants.nom']
-nombre_clients_an = retrieve_year(filtered_clients, "avis.date_avis", col_to_group, "avis.nom_utilisateur", 'nunique')
+
+nombre_clients_an = retrieve_year(filtered_clients.copy(), "avis.date_avis", col_to_group, "avis.nom_utilisateur", 'nunique')
 
 fig4 = px.line(nombre_clients_an, x='année',
             y='avis.nom_utilisateur',
@@ -176,15 +186,17 @@ st.plotly_chart(fig4)
 
 #################################### Sentiment Analysis ###################################
 st.subheader("📈 Analyse des sentiments 📉")
+
 # Recoder les sentiments
-filtered_clients.loc[: ,'avis.label_sentiment']= filtered_clients['avis.label'].replace({5: "Positif", 4: "Positif", 3: "Neutre", 2: "Négatif", 1: "Négatif"}).copy()
+filtered_clients = filtered_clients.copy()
+filtered_clients.loc[: ,'avis.label_sentiment'] = filtered_clients['avis.label'].replace({5: "Positif", 4: "Positif", 3: "Neutre", 2: "Négatif", 1: "Négatif"})
 
 # Calculer les proportions de chaque sentiment pour chaque restaurant
 sentiment_counts = filtered_clients.groupby(['restaurants.nom', 'avis.label_sentiment']).size().reset_index(name='counts')
 sentiment_totals = filtered_clients.groupby('restaurants.nom').size().reset_index(name='total_counts')
 sentiment_counts = sentiment_counts.merge(sentiment_totals, on='restaurants.nom')
 sentiment_counts['proportion'] = sentiment_counts['counts'] / sentiment_counts['total_counts'] * 100
-import pandas as pd
+
 # Assurer l'ordre des sentiments : Positif, Neutre, Négatif
 sentiment_counts['avis.label_sentiment'] = pd.Categorical(
     sentiment_counts['avis.label_sentiment'], 
@@ -210,7 +222,10 @@ fig_sentiments = px.bar(
         'Neutre': 'rgba(255, 165, 0, 0.6)', 
         'Négatif': 'rgba(255, 0, 0, 0.6)' 
     }
+
 )
+fig_sentiments.update_xaxes(tickangle=315)
+
 
 # Afficher le graphique
 st.plotly_chart(fig_sentiments)
@@ -257,12 +272,39 @@ with col1:
     )
 
     st.plotly_chart(fig6)
-    if st.button("Voir le classement complet"):
-        with col2:
-            st.write('')
+    
+    with col2:
+        st.write('')
+        st.write('')
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('') 
+        st.write('')    
+        if st.button("Voir le classement complet"):
 
-        with col3:
-            st.write('')
-            st.write('')
-            st.write('')
-            st.dataframe(restaurant_counts[["Nom", "Rang", "Nombre de notes"]])
+            with col3:
+                st.write('')
+                st.write('')
+                st.write('')
+                st.dataframe(restaurant_counts[["Nom", "Rang", "Nombre de notes"]])
+
+############################################## Recommendation ############################################
+st.subheader("🔍 Recommandation de restaurants 🔍")
+st.write("""Vous pouvez visualiser les restaurants en se basant sur leur similarité.<br>
+        Plus les restaurants sont proches, plus ils sont similaires.<br>
+         """, unsafe_allow_html=True)
+placeholder = st.empty()
+
+if st.button("Voir les restaurants similaires"):
+    placeholder.write("Le chargement peut prendre quelques instants.", unsafe_allow_html=True)
+    plot_restaurant_similarities()
+

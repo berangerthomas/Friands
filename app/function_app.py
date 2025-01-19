@@ -148,7 +148,7 @@ def retrieve_year(df, date_column, col_to_group, col_to_analyze, fun):
         grp_years : Df contenant les données agrégées par année
     """
     # Suppression de la partie heures:min:sec pour certaines dates
-    df[date_column] = (
+    df.loc[: , date_column] = (
         df[date_column].str.split(" ", n=1).str[0]
         if df[date_column].dtype == "object"
         else df[date_column]
@@ -195,27 +195,6 @@ def retrieve_filter_list(df_col):
     return tags_list.unique()
 
 
-# def tags_cleans(tags):
-#     """
-#     Nettoie les tags en supprimant les caractères spéciaux
-
-#     Args:
-#         tags (list): Liste des tags
-#     Returns:
-#         tags_clean (list): Liste des tags nettoyés
-#     """
-#     if any('€' in tag for tag in tags):
-#         # Filtrage des caractères non alphanumériques sauf espaces, accents et "/"
-#         tags_clean = [re.sub(r'[^a-zA-Z0-9À-ÿ/ ]', '', tag) for tag in tags]
-
-#         # Suppression des éléments vides
-#         tags_clean = [tag for tag in tags_clean if tag]
-#     else:
-#         # Si aucun signe € n'est trouvé, ne pas modifier les tags
-#         tags_clean = tags
-#     return tags_clean
-
-
 def check_url(url, db):
     """
     Vérifie si l'URL du restaurant est déjà dans la base de données
@@ -229,30 +208,6 @@ def check_url(url, db):
     query = transform_to_df("restaurants", db, "SELECT url FROM restaurants;")
     existing_urls = query["url"].tolist()
     return url in existing_urls
-
-
-def check_no_null(db, column_name, table_name):
-    """
-    Vérifie qu'une colonne ne possède plus de valeurs nulles.
-
-    Args:
-        db: Instance de la base de données.
-        column_name (str): Nom de la colonne à vérifier.
-        table_name (str): Nom de la table contenant la colonne.
-
-    Returns:
-        bool: True si la colonne ne contient plus de valeurs nulles, False sinon.
-    """
-    query = f"SELECT COUNT(*) FROM {table_name} WHERE {column_name} IS NULL"
-    success, result = db.select(query)
-
-    if not success:
-        raise Exception(
-            f"""Erreur lors de l'exécution de la requête la colonne {column_name} de {table_name} contient des valeurs nulls :
-                        \n {result}"""
-        )
-
-    return result[0][0] == 0
 
 
 def delete_restaurant(bdd, id_restaurant):
