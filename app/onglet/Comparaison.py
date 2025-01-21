@@ -213,7 +213,7 @@ fig_sentiments = px.bar(
     color='avis.label_sentiment',
     labels={
         'restaurants.nom': 'Nom du restaurant', 
-        'proportion': 'Proportion', 
+        'proportion': 'Proportion%', 
         'avis.label_sentiment': 'Sentiment'
     },
     title='Proportion des sentiments pour chaque restaurant',
@@ -231,80 +231,106 @@ fig_sentiments.update_xaxes(tickangle=315)
 st.plotly_chart(fig_sentiments)
 
 #################################### Classement ###################################
-
 st.subheader("🏆Classement des restaurants🏆")
 
-# Sélectionner les notes à afficher
-selected_notes = st.multiselect("Choisissez vos notes pour classer les restaurants", sorted([int(note) for note in filtered_clients["avis.note_restaurant"].unique()], reverse=True))
+# Calculer le nombre total de notes pour chaque restaurant
+total_notes_per_restaurant = filtered_clients.groupby("restaurants.nom").size().reset_index(name="Total des notes")
+
+# Calculer le nombre de chaque note (1 à 5) pour chaque restaurant
+note_counts = filtered_clients.groupby(["restaurants.nom", "avis.note_restaurant"]).size().reset_index(name="Nombre de notes")
+
+# Ajouter une colonne pour la proportion de chaque note
+note_counts = note_counts.merge(total_notes_per_restaurant, on="restaurants.nom", how="left")
+note_counts["Proportion"] = note_counts["Nombre de notes"] / note_counts["Total des notes"]
+
+# Réorganiser les données pour afficher les proportions de chaque note (1 à 5) sous forme de tableau
+proportions_pivot = note_counts.pivot_table(
+    index="restaurants.nom", 
+    columns="avis.note_restaurant", 
+    values="Proportion", 
+    fill_value=0
+).reset_index(drop=False)
+
+
+# Sélectionner les notes à afficher 
+selected_notes = st.multiselect(
+    "Choisissez vos notes pour classer les restaurants", 
+    sorted([int(note) for note in filtered_clients["avis.note_restaurant"].unique()], reverse=True),default=[5]
+)
+
 if selected_notes:
-    filtered_clients = filtered_clients[filtered_clients["avis.note_restaurant"].isin(selected_notes)]
-
-# Calculer le nombre de notes par restaurant
-restaurant_counts = filtered_clients.groupby("restaurants.nom")["avis.note_restaurant"].count().reset_index()
-restaurant_counts.columns = ["Nom", "Nombre de notes"]
-restaurant_counts["Rang"] = restaurant_counts["Nombre de notes"].rank(ascending=False)
-restaurant_counts = restaurant_counts.sort_values(by="Rang").reset_index(drop=True)
-
-# Afficher le top 3 des restaurants
-col1, col2, col3 = st.columns([2, 1, 2])
-
-with col1:
-    # Sélection du Top 3
-    top_3_restaurants = restaurant_counts.head(3).reindex([1, 0, 2]).reset_index(drop=True)
-    colors = ['silver', 'gold', '#cd7f32']
-
-    fig6 = go.Figure(data=[
-        go.Bar(
-            x=top_3_restaurants["Nom"],
-            y=top_3_restaurants["Nombre de notes"],
-            marker=dict(color=colors[:len(top_3_restaurants)]),
-            hovertemplate='<b>Restaurant :</b> %{x}<br><b>Nombre de notes :</b> %{y}<extra></extra>'
-
-        )
-    ])
-
-    fig6.update_xaxes(tickangle=315)
-
-    fig6.update_layout(
-        title="Top 3 des restaurants",
-        xaxis_title="Nom du restaurant",
-        yaxis_title="Nombre de notes", 
-    )
-
-    st.plotly_chart(fig6)
+    # Faire la somme des notes sélectionnées
+    proportions_pivot["Proportion"] = proportions_pivot[selected_notes].sum(axis=1)
+    selected_column = proportions_pivot[["restaurants.nom"] + ["Proportion"]]
     
-    with col2:
-        st.write('')
-        st.write('')
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('') 
-        st.write('')    
-        if st.button("Voir le classement complet"):
+    # Calculer le rang de chaque restaurant et trier les données
+    selected_column = selected_column.assign(Rang=selected_column["Proportion"].rank(ascending=False)).sort_values(by="Rang").reset_index(drop=True)
+    
+    # Afficher le top 3 des restaurants
+    col1, col2, col3 = st.columns([2, 1, 2])
+    with col1:  
+        
+        # Sélection du Top 3
+        top_3_restaurants = selected_column.head(3).reindex([1, 0, 2]).reset_index(drop=True)
+        colors = ['silver', 'gold', '#cd7f32']
 
-            with col3:
-                st.write('')
-                st.write('')
-                st.write('')
-                st.dataframe(restaurant_counts[["Nom", "Rang", "Nombre de notes"]])
+        fig6 = go.Figure(data=[
+            go.Bar(
+                x=top_3_restaurants["restaurants.nom"],
+                y=top_3_restaurants["Proportion"],
+                marker=dict(color=colors[:len(top_3_restaurants)]),
+                hovertemplate='<b>Restaurant :</b> %{x}<br><b>Proportions :</b> %{y:.2f}<extra></extra>'
+
+            )
+        ])
+
+        fig6.update_xaxes(tickangle=315)
+        fig6.update_yaxes(range=[0, 1])
+
+        fig6.update_layout(
+            title="Top 3 des restaurants",
+            xaxis_title="Nom du restaurant",
+            yaxis_title="Proportion", 
+        )
+
+        st.plotly_chart(fig6)
+    with col2:
+            st.write('')
+            st.write('')
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('') 
+            st.write('')    
+            if st.button("Voir le classement complet"):
+
+                with col3:
+                    st.write('')
+                    st.write('')
+                    st.write('')
+                    selected_column = selected_column.rename(columns={"restaurants.nom": "Nom"})
+                    st.dataframe(selected_column[["Nom", "Rang", "Proportion"]])
+else : 
+    st.warning("Veuillez sélectionner au moins une note pour voir le classement")
+
 
 ############################################## Recommendation ############################################
 st.subheader("🔍 Recommandation de restaurants 🔍")
 st.write("""Vous pouvez visualiser les restaurants en se basant sur leur similarité.<br>
         Plus les restaurants sont proches, plus ils sont similaires.<br>
+         Attention ce visuel n'est pas soumis aux filtres.
          """, unsafe_allow_html=True)
-placeholder = st.empty()
 
 if st.button("Voir les restaurants similaires"):
-    placeholder.write("Le chargement peut prendre quelques instants.", unsafe_allow_html=True)
+    st.write("Le chargement peut prendre quelques instants.", unsafe_allow_html=True)
+    # Appel de la fonction pour visualiser le cube
     plot_restaurant_similarities()
 
